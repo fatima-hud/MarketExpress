@@ -1,0 +1,226 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Complaint Chat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 30px;
+        }
+
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status {
+            font-size: 0.8em;
+            margin-left: 10px;
+            color: gray;
+        }
+
+        input, button {
+            padding: 8px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Complaint Chat</h2>
+
+    <label>User Id:</label>
+    <input type="text" id="userId" /> <br>
+
+    <label>Complaint Id:</label>
+    <input type="number" id="complaintId" />
+
+    <br><br>
+
+    <div id="messages"></div>
+
+    <input type="text" id="messageInput" placeholder="Type message..." />
+
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="joinComplaint()">Join Complaint</button>
+    <button onclick="markAllAsRead()">Mark All Read</button>
+
+    <script>
+        console.log("JavaScript loaded ✅");
+
+        let connection;
+
+        async function startConnection() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("https://localhost:7155/chatHub")
+                .withAutomaticReconnect()
+                .build();
+
+            // 1. استقبال رسالة جديدة
+            // ملاحظة: تأكد أن الـ Hub يرسل الـ messageId كبارامتر ثالث
+            connection.on("ReceiveMessage", function (userId, message, messageId) {
+                const messagesDiv = document.getElementById("messages");
+
+                const messageDiv = document.createElement("div");
+                messageDiv.classList.add("message");
+
+                // مهم جدًا: ID حقيقي
+                messageDiv.id = "msg-" + messageId;
+
+                messageDiv.innerHTML = `
+        <span class="text-content">${message}</span>
+    `;
+
+                messagesDiv.appendChild(messageDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight; //
+            });
+          
+      
+            connection.on("MessageRemoved", function (data) {
+                console.log("🗑️ Message Deleted:", data);
+
+                const messageElement = document.getElementById("msg-" + data.messageId);
+                if (messageElement) {
+                    messageElement.remove();
+                }
+            });
+            connection.on("MessageUpdated", function (data) {
+                const messageId = data.messageId || data.MessageId;
+                const messageText = data.messageText || data.MessageText;
+
+                let messageElement = document.getElementById("msg-" + messageId);
+
+                if (!messageElement) {
+                    // إذا لم يوجد العنصر، أنشئه (مثلاً تم تعديل رسالة قبل تحميلها في DOM)
+                    const messagesDiv = document.getElementById("messages");
+                    messageElement = document.createElement("div");
+                    messageElement.classList.add("message");
+                    messageElement.id = "msg-" + messageId;
+                    messageElement.innerHTML = `<span class="text-content">${messageText}</span>`;
+                    messagesDiv.appendChild(messageElement);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    return;
+                }
+
+                const textSpan = messageElement.querySelector(".text-content");
+                if (textSpan) textSpan.textContent = messageText;
+            });
+
+            // 4. مستمع حالة القراءة الجماعية
+            connection.on("MessagesMarkedAsRead", function (data) {
+                console.log("📖 Read by user in complaint:", data.complaintId);
+                if (data.messages) {
+                    data.messages.forEach(msg => {
+                        const messageElement = document.getElementById("msg-" + msg.messageId);
+                        if (messageElement) {
+                            const statusSpan = messageElement.querySelector(".status");
+                            if (statusSpan) {
+                                statusSpan.textContent = " ✔✔";
+                                statusSpan.style.color = "#3498db"; // أزرق
+                            }
+                        }
+                    });
+                }
+            });
+
+            try {
+                await connection.start();
+                console.log("Connected to SignalR ✅");
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+            }
+        }
+
+        async function joinComplaint() {
+            const complaintId = parseInt(document.getElementById("complaintId").value);
+            if (!complaintId) { alert("Enter Complaint Id first"); return; }
+
+            try {
+                await connection.invoke("JoinComplaint", complaintId);
+                console.log("Joined Group: " + complaintId);
+            } catch (err) { console.error(err); }
+        }
+
+        async function sendMessage() {
+            if (connection.state !== "Connected") { alert("Not connected"); return; }
+
+            const userId = document.getElementById("userId").value;
+            const complaintId = parseInt(document.getElementById("complaintId").value);
+            const message = document.getElementById("messageInput").value;
+
+            if (!userId || !complaintId || !message) { alert("Fill all fields"); return; }
+
+            try {
+                // استدعاء الميثود في الـ Hub (تأكد أن اسمها SendMessage في السيرفر)
+                await connection.invoke("SendMessage", complaintId, userId, message);
+                document.getElementById("messageInput").value = "";
+            } catch (err) { console.error(err); }
+        }
+
+        async function markAllAsRead() {
+            const complaintId = document.getElementById("complaintId").value;
+            if (!complaintId) return;
+
+            const token = "YOUR_TOKEN_HERE"; // استبدله بالتوكين الحقيقي
+
+            try {
+                await fetch("https://localhost:7155/api/Messages/ReadMessage", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ complaintId: parseInt(complaintId) })
+                });
+            } catch (err) { console.error("Fetch Error:", err); }
+        }
+
+        function scrollChat() {
+            const msgDiv = document.getElementById("messages");
+            msgDiv.scrollTop = msgDiv.scrollHeight;
+        }
+        async function updateMessage(messageId, newText, complaintId) {
+            const token = "YOUR_TOKEN_HERE"; // استبدل بالتوكين الحقيقي
+
+            try {
+                const response = await fetch("https://localhost:7155/api/Messages/UpdateMessage", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        Id: messageId,
+                        ComplaintId: complaintId,
+                        MessageText: newText
+                    })
+                });
+
+                if (!response.ok) throw new Error("Failed to update message");
+
+                console.log("Message updated successfully");
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        startConnection();
+    </script>
+</body>
+</html>

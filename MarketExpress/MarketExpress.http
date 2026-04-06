@@ -1,0 +1,6 @@
+@MarketExpress_HostAddress = http://localhost:5037
+
+GET {{MarketExpress_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

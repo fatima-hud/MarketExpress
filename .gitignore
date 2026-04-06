@@ -1,0 +1,21 @@
+# Visual Studio temporary files
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.log
+*.pdb
+*.cache
+
+# Rider
+.idea/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+
+# ASP.NET Core
+appsettings.Development.json
+wwwroot/lib/
