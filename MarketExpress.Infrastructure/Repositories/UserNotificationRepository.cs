@@ -2,6 +2,7 @@
 using MarketExpress.Database;
 using MarketExpress.Infrastructure.Abstacts;
 using MarketExpress.Infrastructure.InfrastructureBases;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,12 @@ namespace MarketExpress.Infrastructure.Repositories
     {
         public UserNotificationRepository(ApplicationDbContext dbContext) : base(dbContext)
         {
+        }
+
+        public async Task<UserNotification?> GetNotificationByUserAsync(string userId, int notificationId)
+        {
+            var ret=await _dbContext.UserNotifications.FirstOrDefaultAsync(e=>e.UserId==userId && e.NotificationId == notificationId);
+            return ret;
         }
     }
 }

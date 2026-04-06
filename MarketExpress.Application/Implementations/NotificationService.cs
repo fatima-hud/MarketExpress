@@ -24,12 +24,12 @@ namespace MarketExpress.Application.Implementations
             _userNotificationRepository = userNotificationRepository;
         
         }
-        public async Task<Result<ResponseAddNotificationDto>> AddAsync(string OwnerStoreId, RequestAddNotificationDto request)
+        public async Task<Result<ResponseAddNotificationDto>> AddAsync(string ownerStoreId, RequestAddNotificationDto request)
         {
             var trans = await _notificationRepository.BeginTransactionAsync();
             try
             {
-                var owner= await _userManager.FindByIdAsync(OwnerStoreId);
+                var owner= await _userManager.FindByIdAsync(ownerStoreId);
                 if (owner is null)
                 {
                     return Result<ResponseAddNotificationDto>.NotFound("Owner store not found");
@@ -39,24 +39,26 @@ namespace MarketExpress.Application.Implementations
                 {
                     return Result<ResponseAddNotificationDto>.BadRequest("User hasn't store");
                 }
-                var store = await _storeRepository.GetStoreByAdminAsync(OwnerStoreId);
+                var store = await _storeRepository.GetStoreByAdminAsync(ownerStoreId);
                 if (store is null)
                 {
                     return Result<ResponseAddNotificationDto>.BadRequest("User hasn't store");
                 }
-                if (!request.IsGlobal && (request.UserIds == null || !request.UserIds.Any()))
-
+               
+                var isDuplicate = await _notificationRepository.DuplicateCheckAsync(ownerStoreId, request.Title, request.Message,request.Type);
+                if (isDuplicate)
                 {
-                    return Result<ResponseAddNotificationDto>.BadRequest("UserIds required when IsGlobal is false");
+                    return Result<ResponseAddNotificationDto>.BadRequest("Duplicate notification detected");
 
                 }
+
                 List<string> users;
                 if (!request.IsGlobal)
                 {
                     if (request.UserIds == null || !request.UserIds.Any())
                         return Result<ResponseAddNotificationDto>.BadRequest("UserIds required when IsGlobal is false");
 
-                    // تنظيف القيم: إزالة الفراغات وتحويلها إلى قائمة فريدة
+                    
                     var userIds = request.UserIds
                         .Where(id => !string.IsNullOrWhiteSpace(id))
                         .Distinct()
@@ -89,7 +91,7 @@ namespace MarketExpress.Application.Implementations
                         .BadRequest("No users available to send notification");
                 }
 
-
+               
                 var notification = new Notification
                 {
                     CreatedBy = owner.Id,
@@ -129,8 +131,42 @@ namespace MarketExpress.Application.Implementations
             catch (Exception ex)
             {
                 await trans.RollbackAsync();
-                return Result<ResponseAddNotificationDto>.Failure("Something was wrong");
+                return Result<ResponseAddNotificationDto>.Failure($"Something was wrong {ex.Message}");
             }
+        }
+
+        public async Task<Result<ResponseReadNotificationDto>> MarkAsReadAsync(string userId, int notificationId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null)
+            {
+                return Result<ResponseReadNotificationDto>.NotFound("User not found");
+            }
+            var notification = await _notificationRepository.GetByIdAsync(notificationId);
+            if (notification is null)
+            {
+                return Result<ResponseReadNotificationDto>.NotFound("Notification not found");
+            }
+            var userNotification = await _userNotificationRepository.GetNotificationByUserAsync(userId, notificationId);
+            if (userNotification is null)
+            {
+                return Result<ResponseReadNotificationDto>.NotFound("Notification not found for this user");
+            }
+            if (userNotification.IsRead)
+            {
+                return Result<ResponseReadNotificationDto>.BadRequest("Notification already marked as read");
+            }
+            userNotification.IsRead = true;
+            userNotification.ReadAt = DateTime.UtcNow;
+            await _userNotificationRepository.UpdateAsync(userNotification);
+            var ret = new ResponseReadNotificationDto
+            {
+                NotificationId = notificationId,
+                IsRead = userNotification.IsRead,
+                ReadAt = userNotification.ReadAt
+            };
+            return Result<ResponseReadNotificationDto>.Success(ret);
+
         }
     }
 }

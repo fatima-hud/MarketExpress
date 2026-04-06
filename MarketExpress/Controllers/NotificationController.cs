@@ -23,9 +23,9 @@ namespace MarketExpress.Controllers
         {
             _notificationService = notificationService;
         }
-        [Authorize(Roles = "Admin,User")]
+        [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<ApiResult<ResponseAddNotificationDto>> AddNotificationAsync([FromBody]RequestAddNotificationDto request)
+        public async Task<ApiResult<ResponseAddNotificationDto>> AddNotificationAsync([FromBody] RequestAddNotificationDto request)
         {
             if (!ModelState.IsValid)
             {
@@ -36,13 +36,36 @@ namespace MarketExpress.Controllers
             {
                 return ApiResult<ResponseAddNotificationDto>.Unauthorized();
             }
-            var res=await _notificationService.AddAsync(userId, request);
+            var res = await _notificationService.AddAsync(userId, request);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
             return ApiResult<ResponseAddNotificationDto>.Created(res.Value);
         }
+        [Authorize]
+        [HttpPut("{notificationId}/read")]
+        public async Task<ApiResult<ResponseReadNotificationDto>> MarkAsReadAsync(int notificationId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiResult<ResponseReadNotificationDto>.BadRequest(ModelState.ToString());
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<ResponseReadNotificationDto>.Unauthorized();
+            }
+            var res = await _notificationService.MarkAsReadAsync(userId, notificationId);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<ResponseReadNotificationDto>.Ok(res.Value);
 
-    }
+        }
+
+
+
+        }
 }

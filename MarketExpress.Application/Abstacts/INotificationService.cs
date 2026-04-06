@@ -11,7 +11,8 @@ namespace MarketExpress.Application.Abstacts
 {
     public interface INotificationService
     {
-        Task<Result<ResponseAddNotificationDto>> AddAsync(string OwnerStoreId, RequestAddNotificationDto request);
+        Task<Result<ResponseAddNotificationDto>> AddAsync(string ownerStoreId, RequestAddNotificationDto request);
+        Task<Result<ResponseReadNotificationDto>> MarkAsReadAsync(string userId, int notificationId);
 
     }
 }

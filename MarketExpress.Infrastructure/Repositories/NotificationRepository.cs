@@ -1,7 +1,9 @@
 ﻿using MarketExpress.Core.Entity;
+using MarketExpress.Core.Enums;
 using MarketExpress.Database;
 using MarketExpress.Infrastructure.Abstacts;
 using MarketExpress.Infrastructure.InfrastructureBases;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +16,19 @@ namespace MarketExpress.Infrastructure.Repositories
     {
         public NotificationRepository(ApplicationDbContext dbContext) : base(dbContext)
         {
+        }
+
+        public async Task<bool> DuplicateCheckAsync(string createdBy, string title, string message,enNotificationType type)
+        {
+            var fromTime = DateTime.UtcNow.AddSeconds(-10);
+            var duplicate = await _dbContext.Notifications.AnyAsync(n =>
+                n.CreatedBy == createdBy &&
+                n.Title == title &&
+                n.Message == message &&
+                n.Type == type&&
+                n.CreatedAt >= fromTime
+            );
+            return duplicate;
         }
     }
 }

@@ -276,7 +276,7 @@ namespace MarketExpress.Infrastructure.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("Notification", "dbo");
+                    b.ToTable("Notifications", "dbo");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Order", b =>
@@ -640,7 +640,7 @@ namespace MarketExpress.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserNotification", "dbo");
+                    b.ToTable("UserNotifications", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

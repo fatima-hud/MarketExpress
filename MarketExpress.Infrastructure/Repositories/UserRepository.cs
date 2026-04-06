@@ -45,10 +45,7 @@ namespace MarketExpress.Infrastructure.Repositories
             throw new NotImplementedException();
         }
 
-        /* public async Task<List<string>> GetRolesByStoreIdAsync(string userId, int storeId)
-         {
-           var res= await _dbContext.UserRoles.Where(e=>e.UserId == userId&&e.).ToListAsync()  
-         }*/
+      
 
         public async Task<bool> PhoneNumberHasFoundAsync(string phoneNumber)
         {
