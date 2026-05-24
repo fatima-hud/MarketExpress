@@ -14,6 +14,6 @@ namespace MarketExpress.Application.Dto.Request
 
         public enType? Type { get; set; }
         public string? Color { get; set; }
-        public string? Size { get; set; }
+        public enSize? Size { get; set; }
     }
 }

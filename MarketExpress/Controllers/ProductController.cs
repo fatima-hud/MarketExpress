@@ -1,19 +1,17 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Dto.Category.Response;
+using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Product.Request;
 using MarketExpress.Application.Dto.Product.Response;
 using MarketExpress.Application.Dto.Request;
-using MarketExpress.Application.Dto.Response;
-using MarketExpress.Application.Implementations;
-using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace MarketExpress.Controllers
 {
+    [Route("api/[controller]/[action]")]
+    [ApiController]
     public class ProductController : Controller
     {
         private readonly IProductService _productService;
@@ -26,116 +24,121 @@ namespace MarketExpress.Controllers
             _categoryService = categoryService;
             _imageService = imageService;
         }
-
-        [HttpGet("SearchProducts")]
-        public async Task<ApiResult<List<ProductResponse>>> SearchProducts([FromQuery] string query)
+/*
+        [HttpGet]
+        public async Task<ApiResult<List<ResponseProductDto>>> SearchProducts([FromQuery] string query)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<List<ProductResponse>>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+
+
+
+                return ApiResult<List<ResponseProductDto>>.BadRequest(errors);
             }
             var prod = await _productService.SearchAsync(query);
             if (!prod.IsSuccess)
             {
                 return this.ToApiResult(prod);
             }
-            return ApiResult<List<ProductResponse>>.Ok(prod.Value, "Successful");
+            return ApiResult<List<ResponseProductDto>>.Ok(prod.Value, "Successful");
 
         }
-        [HttpGet("Filter")]
-        public async Task<ApiResult<List<ProductResponse>>> FilterAsync(FilterDto dto)
+        [HttpGet]
+        public async Task<ApiResult<List<ResponseProductDto>>> FilterAsync(FilterDto dto)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<List<ProductResponse>>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponseProductDto>>.BadRequest(errors);
             }
             var products = await _productService.FilterAsync(dto);
             if (!products.IsSuccess)
             {
                 return this.ToApiResult(products);
             }
-            return ApiResult<List<ProductResponse>>.Ok(products.Value, "Successful");
+            return ApiResult<List<ResponseProductDto>>.Ok(products.Value, "Successful");
 
         }
-      
+*/
 
-
-
-
-
-        [Authorize(Roles ="Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<ApiResult<ProductResponse>> AddProduct([FromBody]ProductRequest request)
+        public async Task<ApiResult<ResponseProductDetailsDto>> AddProduct([FromForm] RequestAddProductDto request)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<ProductResponse>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseProductDetailsDto>.BadRequest(errors);
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
+            if (string.IsNullOrEmpty(userId))
             {
-                return ApiResult<ProductResponse>.Unauthorized();
+                return ApiResult<ResponseProductDetailsDto>.Unauthorized();
             }
-            var res = await _productService.AddAsync(userId,request);
+            var res = await _productService.AddAsync(userId, request);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult<ProductResponse>.Created(res.Value);
+            return ApiResult<ResponseProductDetailsDto>.Created(res.Value);
         }
-        [Authorize(Roles ="Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("{productId}")]
-        public async Task<ApiResult<ProductResponse>> UpdateProduct([FromRoute]int productId,[FromBody]UpdateProductRequest request)
+        public async Task<ApiResult<ResponseUpdateProductDto>> UpdateProduct([FromRoute] int productId, [FromForm] RequestUpdateProductDto request)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<ProductResponse>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseUpdateProductDto>.BadRequest(errors);
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
+            if (string.IsNullOrEmpty(userId))
             {
-                return ApiResult<ProductResponse>.Unauthorized();
+                return ApiResult<ResponseUpdateProductDto>.Unauthorized();
             }
-            var res = await _productService.UpdateAsync(userId,request,productId);
+            var res = await _productService.UpdateAsync(userId, request, productId);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult<ProductResponse>.Ok(res.Value);
+            return ApiResult<ResponseUpdateProductDto>.Ok(res.Value);
         }
-        [Authorize(Roles ="Admin")]
-        [HttpDelete("DeleteProduct/{productId}")]
-        public async Task<ApiResult> DeleteProduct([FromRoute]int productId)
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{productId}")]
+        public async Task<ApiResult> DeleteProduct([FromRoute] int productId)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
+            if (string.IsNullOrEmpty(userId))
             {
                 return ApiResult.Unauthorized();
             }
-            var res = await _productService.DeleteAsync(userId,productId);
+            var res = await _productService.DeleteAsync(userId, productId);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
             return ApiResult.Ok();
         }
-        [HttpGet("GetProduct")]
-        public async Task<ApiResult<ProductResponse>> GetProduct(int productId)
+        [HttpGet("{productId}")]
+        public async Task<ApiResult<ResponseProductDetailsDto>> GetProduct(int productId)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<ProductResponse>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseProductDetailsDto>.BadRequest(errors);
             }
             var res = await _productService.GetProductAsync(productId);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult<ProductResponse>.Ok(res.Value);
+            return ApiResult<ResponseProductDetailsDto>.Ok(res.Value);
         }
 
     }

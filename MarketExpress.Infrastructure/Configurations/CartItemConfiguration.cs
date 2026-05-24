@@ -13,8 +13,9 @@ namespace MarketExpress.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<CartItem> builder)
         {
-           
+            builder.Property(e => e.Size).HasConversion<string>();
 
+          
             builder
     .HasOne(x => x.Cart)
     .WithMany(x => x.CartItems)

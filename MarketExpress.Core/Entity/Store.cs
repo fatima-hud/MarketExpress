@@ -23,6 +23,8 @@ namespace MarketExpress.Core.Entity
         public bool IsActive {  get; set; }
         public decimal Latitude {  get; set; }
         public decimal Longitude { get; set; }
+        public string PhoneNumber {  get; set; }
+        public string Email {  get; set; }
         public TimeSpan WorkingHoursStart { get; set; }
 
         public TimeSpan WorkingHoursEnd { get; set; }
@@ -39,11 +41,15 @@ namespace MarketExpress.Core.Entity
         public ICollection<User> Employees { get; set; }
    
         public ICollection<Product>Products { get; set; }
-        public ICollection<Order> Orders { get; set; }
-       
-       
-     
-        
+      
+        public ICollection<Notification> Notifications { get; set; }
+        public ICollection<Document> StoreDocuments { get; set; }
+        public ICollection<StoreCategory> StoreCategories {  get; set; }
+
+
+
+
+
 
 
 

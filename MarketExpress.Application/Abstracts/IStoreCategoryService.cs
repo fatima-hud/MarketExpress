@@ -1,0 +1,20 @@
+﻿using MarketExpress.Application.Dto.StoreCategory.Request;
+using MarketExpress.Application.Dto.StoreCategory.Response;
+using MarketExpress.Core.Results;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MarketExpress.Application.Abstracts
+{
+    public interface IStoreCategoryService
+    {
+        Task<Result<ResponseGetStoreCategoryDto>> AddAsync(string userId,RequestAddStoreCategoryDto dto);
+        Task<Result>DeleteAsync(string userId,int storeCategoryId );
+        Task<Result<List<ResponseGetStoreCategoryDto>>>GetAllStoreCategoryAsync(string userId);
+        Task<Result<List<ResponseGetStoreCategoryDto>>> GetAllStoreCategoryAsync(int storeId);
+
+    }
+}

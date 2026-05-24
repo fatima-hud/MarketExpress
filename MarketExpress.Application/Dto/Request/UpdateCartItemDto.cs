@@ -10,6 +10,7 @@ namespace MarketExpress.Application.Dto.Request
     {
         public int Quantity { get; set; }
        
-        
+
+
     }
 }

@@ -30,13 +30,13 @@ namespace MarketExpress.Infrastructure.Repositories
 
         public async Task<string> GetNationalIdBackImageByUser(string userId)
         {
-            var image = await _dbContext.Documents.FirstOrDefaultAsync(e => e.UserId == userId && e.Type == enDocumentType.NationalIdBackImage);
+            var image = await _dbContext.Documents.FirstOrDefaultAsync(e => e.UserId == userId && e.FileType == enFileDocumentType.NationalIdBackImage);
             return image != null ? image.FilePath : null;
         }
 
         public async Task<string> GetNationalIdFrontImageByUser(string userId)
         {
-            var image=await _dbContext.Documents.FirstOrDefaultAsync(e=>e.UserId == userId && e.Type==enDocumentType.NationalIdFrontImage );
+            var image=await _dbContext.Documents.FirstOrDefaultAsync(e=>e.UserId == userId && e.FileType==enFileDocumentType.NationalIdFrontImage );
             return image != null ? image.FilePath : null;
         }
 
@@ -45,7 +45,18 @@ namespace MarketExpress.Infrastructure.Repositories
             throw new NotImplementedException();
         }
 
-      
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            var res= await _dbContext.Users.FirstOrDefaultAsync(e=> e.Email == email&&!e.IsBanned);
+            return res;
+
+        }
+
+        public async Task<User> GetUserByPhoneNumberAsync(string phoneNumber)
+        {
+            var res= await _dbContext.Users.FirstOrDefaultAsync(e => e.PhoneNumber == phoneNumber&&!e.IsBanned);
+            return res;
+        }
 
         public async Task<bool> PhoneNumberHasFoundAsync(string phoneNumber)
         {

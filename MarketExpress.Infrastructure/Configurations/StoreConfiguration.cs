@@ -23,15 +23,18 @@ namespace MarketExpress.Infrastructure.Configurations
             builder.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()").ValueGeneratedOnAdd();
        
             builder.Property(e => e.StoreStatus).HasDefaultValue(enStoreStatus.Pending);
-            builder.HasIndex(s => s.OwnerId).IsUnique();
-
 
            
+
+            builder.Property(e=>e.StoreStatus).HasConversion<string>();
+
             builder.HasMany(e => e.Products).WithOne(e => e.Store).HasForeignKey(e => e.StoreId).OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasOne(e=>e.Owner).WithOne().HasForeignKey<Store>(e=>e.OwnerId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(e=>e.Owner).WithMany(e=>e.Stores).HasForeignKey(e=>e.OwnerId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasMany(e=>e.Notifications).WithOne(e=>e.Store).HasForeignKey(e=>e.StoreId).OnDelete(DeleteBehavior.Restrict);
 
-       
+            builder.HasMany(e => e.StoreCategories).WithOne(e => e.Store).HasForeignKey(e => e.StoreId).OnDelete(DeleteBehavior.Restrict);
+           
 
         }
     }

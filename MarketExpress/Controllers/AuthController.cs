@@ -32,15 +32,16 @@ namespace MarketExpress.Controllers
         private readonly UserManager<User> _userManager;
         private readonly IEmailService _emailService;
         private readonly IImageService _imageService;
-    
+        private readonly IOtpCodeService _otpCodeService;
 
-        public AuthController(IAuthService authService, UserManager<User> userManager ,IEmailService emailService,IImageService imageService)//IUserService userService )
+        public AuthController(IAuthService authService, UserManager<User> userManager ,IEmailService emailService,IImageService imageService,IOtpCodeService otpCodeService )
         {
             _authService = authService;
             _userManager = userManager;
             _emailService = emailService;
             _imageService = imageService;
-     
+            _otpCodeService = otpCodeService;
+
         }
 
         [HttpPost("Register")]
@@ -48,7 +49,9 @@ namespace MarketExpress.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
+
             }
             var addNewUser = await _authService.RegisterAsync(request);
             if (!addNewUser.IsSuccess)
@@ -66,7 +69,9 @@ namespace MarketExpress.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<LogInResponse>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<LogInResponse>.BadRequest(errors);
+
             }
             var log = await _authService.LoginInAsync(dto);
             if (!log.IsSuccess)
@@ -83,11 +88,16 @@ namespace MarketExpress.Controllers
        
 
         [HttpPost("ConfirmEmail")]
-        public async Task<IActionResult> ConfirmEmail([FromBody]ConfirmEmailRequest request)
+        public async Task<ApiResult> ConfirmEmail([FromBody]ConfirmEmailRequest request)
         {
 
-           
-            var result = await _emailService.ConfirmEmailAsync(request);
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
+
+            }
+            var result = await _otpCodeService.ConfirmEmailAsync(request);
             if (result.IsSuccess)
                 return ApiResult.Ok("Email confirmed successfully!");
             else
@@ -95,9 +105,15 @@ namespace MarketExpress.Controllers
                 
         }
         [HttpPost("ResendOtpCode")]
-        public async Task<IActionResult> ResendOtpCode([FromBody]ResendOtpRequest request)
+        public async Task<ApiResult> ResendOtpCode([FromBody]ResendOtpRequest request)
         {
-            var result=await _emailService.ResendOtpCodeAsync(request);
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
+
+            }
+            var result=await _otpCodeService.ResendOtpCodeAsync(request);
            
             if (result.IsSuccess)
                 return ApiResult.Ok("successfully!");
@@ -112,8 +128,15 @@ namespace MarketExpress.Controllers
 
         [HttpPost("RefreshToken")]
         public async Task<ApiResult<AuthResponse>> RefreshToken([FromBody] RefreshAccessTokenRequest request)
-                
+              
+            
             {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<AuthResponse>.BadRequest(errors);
+
+            }
             var result = await _authService.RefreshAccessTokenAsync(request);
   
             
@@ -138,7 +161,9 @@ namespace MarketExpress.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult.BadRequest("Invalid logout request.");
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
+
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId) )
@@ -153,12 +178,24 @@ namespace MarketExpress.Controllers
         [HttpPost("ForgotPassword")]
         public async Task<ApiResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
+
+            }
             var result = await _authService.ForgotPasswordAsync(request);
             return this.ToApiResult(result);
         }
         [HttpPost("ResetPassword")]
         public async Task<ApiResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
+
+            }
             var result = await _authService.ResetPasswordAsync(request);
             return this.ToApiResult(result);
         }

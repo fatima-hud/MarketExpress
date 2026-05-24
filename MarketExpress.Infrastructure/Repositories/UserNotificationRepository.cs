@@ -17,6 +17,18 @@ namespace MarketExpress.Infrastructure.Repositories
         {
         }
 
+        public async Task<List<UserNotification>> GetAllNotificationByUserAsync(string userId)
+        {
+            var ret = await _dbContext.UserNotifications.Include(e => e.Notification).ThenInclude(e=>e.Store).Where(e => e.UserId == userId).OrderByDescending(e => e.Notification.CreatedAt).AsNoTracking().ToListAsync();
+            return ret;
+        }
+
+        public async Task<List<UserNotification>> GetAllUnReadNotinficationByUserAsync(string userId)
+        {
+            var ret = await _dbContext.UserNotifications.Include(e => e.Notification).ThenInclude(e=>e.Store).Where(e => e.UserId == userId && !e.IsRead).OrderByDescending(e => e.Notification.CreatedAt).AsNoTracking().ToListAsync();
+            return ret;
+        }
+
         public async Task<UserNotification?> GetNotificationByUserAsync(string userId, int notificationId)
         {
             var ret=await _dbContext.UserNotifications.FirstOrDefaultAsync(e=>e.UserId==userId && e.NotificationId == notificationId);

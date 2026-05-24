@@ -17,9 +17,9 @@ namespace MarketExpress.Infrastructure.Repositories
         {
         }
 
-        public async Task<List<Order>> GetAllOrder(string userId)
+        public async Task<List<Order>> GetAllOrderAsync(string userId)
         {
-            var orders=await _dbContext.Orders.Where(e=>e.UserId == userId).ToListAsync();
+            var orders=await _dbContext.Orders.Where(e=>e.UserId == userId).OrderByDescending(e=>e.CreatedAt).ToListAsync();
             
             return orders;
             

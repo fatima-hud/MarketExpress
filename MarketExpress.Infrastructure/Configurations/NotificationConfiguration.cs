@@ -11,7 +11,7 @@ namespace MarketExpress.Infrastructure.Configurations
             builder.Property(n => n.Type).HasConversion<string>();
 
             builder.HasMany(e => e.UserNotifications).WithOne(e => e.Notification).HasForeignKey(e => e.NotificationId).OnDelete(DeleteBehavior.Restrict);
-            builder.HasOne(e => e.OwnerStore).WithMany(e => e.AddNotifications).HasForeignKey(e => e.CreatedBy).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(e => e.CreatedBy).WithMany(e => e.AddNotifications).HasForeignKey(e => e.CreatedById).OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

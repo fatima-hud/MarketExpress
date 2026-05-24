@@ -20,18 +20,17 @@ namespace MarketExpress.Infrastructure.Configurations
             builder.Property(e => e.Image).HasMaxLength(500);
             builder.Property(p => p.DiscountPercentage).HasColumnType("decimal(5,2)");
             builder.Property(p => p.Price).HasColumnType("decimal(18,2)").IsRequired();
-            
-           
-           builder.Property(e => e.PriceAfterDiscount)
-            .HasComputedColumnSql(
-            "CASE WHEN [DiscountPercentage] IS NOT NULL " +
-            "THEN [Price] - ([Price] * ([DiscountPercentage] / 100.0)) " +
-            "ELSE [Price] END", stored: true
-        );
+            builder.Property(e => e.Type).HasConversion<string>();
+            builder.Property(p => p.Gender).HasConversion<string>();
+            builder.HasQueryFilter(e => !e.IsDeleted);
+            builder.Property(p => p.Season).HasConversion<string>();
+            builder.HasMany(e => e.Ratings).WithOne(e => e.Product).HasForeignKey(e => e.ProductId).OnDelete(DeleteBehavior.Restrict);
+
+       
 
             builder.ToTable(t => {
                 t.HasCheckConstraint("CK_Product_Price", "[Price] > 0");
-                t.HasCheckConstraint("CK_Product_Quantity", "[Quantity] >= 0");
+           
                 t.HasCheckConstraint("CK_Product_Discount", "[DiscountPercentage] Is null or ([DiscountPercentage] >= 0 and [DiscountPercentage] <=100)");
                 }
             );

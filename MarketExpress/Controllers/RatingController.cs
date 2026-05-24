@@ -1,17 +1,17 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Dto.Request;
+using MarketExpress.Application.Abstracts;
+using MarketExpress.Application.Dto.Authontication.Response;
+using MarketExpress.Application.Dto.Rating.Request;
+using MarketExpress.Application.Dto.Rating.Response;
 using MarketExpress.Application.Dto.Response;
-using MarketExpress.Application.Implementations;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace MarketExpress.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class RatingController : ControllerBase
     {
@@ -22,85 +22,27 @@ namespace MarketExpress.Controllers
             _ratingService = ratingService;
         }
         [Authorize]
-        [HttpPost("AddRating")]
-        public async Task<IActionResult> AddRating([FromBody]RatingDto dto)
+        [HttpPost]
+        public async Task<ApiResult<ResponseRatingDto>> AddRating([FromBody] RequestRatingDto dto)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseRatingDto>.BadRequest(errors);
+
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
+            if (string.IsNullOrEmpty(userId))
             {
-                return ApiResult<ResponseClothingItemDto>.Unauthorized();
+                return ApiResult<ResponseRatingDto>.Unauthorized();
             }
-            var res = await _ratingService.AddRatingAsync(userId,dto);
+            var res = await _ratingService.AddRatingAsync(userId, dto);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult.Created();
+            return ApiResult<ResponseRatingDto>.Created(res.Value);
         }
-        [Authorize]
-        [HttpPut("UpdateRating")]
-        public async Task<IActionResult> UpdateRating([FromBody]RatingDto dto, int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return ApiResult.BadRequest(ModelState.ToString());
-            }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
-            {
-                return ApiResult<ResponseClothingItemDto>.Unauthorized();
-            }
-            var res = await _ratingService.UpdateRatingAsync(userId,dto, id);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult.Ok();
-        }
-        [Authorize]
-        [HttpDelete("DeleteRating/{id}")]
-        public async Task<IActionResult> DeleteRating(int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return ApiResult.BadRequest(ModelState.ToString());
-            }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
-            {
-                return ApiResult<ResponseClothingItemDto>.Unauthorized();
-            }
-            var res = await _ratingService.DeleteRatingAsync(userId,id);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult.Ok();
-        }
-        [Authorize]
-       
-        [HttpDelete("DeleteComment/{id}")]
-        public async Task<IActionResult> DeleteComment( int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return ApiResult.BadRequest(ModelState.ToString());
-            }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
-            {
-                return ApiResult<ResponseClothingItemDto>.Unauthorized();
-            }
-            var res = await _ratingService.DeleteCommentAsync(userId, id);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult.Ok();
-        }
+      
     }
 }

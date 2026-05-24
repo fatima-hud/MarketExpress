@@ -21,10 +21,10 @@ namespace MarketExpress.Infrastructure.Repositories
 
        
 
-        public async Task<bool> IsNameFoundAsync(string name)
+        public async Task<bool> IsNameExistAsync(string name)
         {
           
-            var res= await _dbContext.Stores.FirstOrDefaultAsync(e=>e.StoreName.ToLower()==name.Trim().ToLower() && e.StoreStatus!=enStoreStatus.Rejected);
+            var res= await _dbContext.Stores.FirstOrDefaultAsync(e=>e.StoreName.ToLower()==name&& e.StoreStatus!=enStoreStatus.Rejected &&e.StoreStatus!=enStoreStatus.Cancelled &&e.StoreStatus!=enStoreStatus.Deleted);
             return res != null;
         }
 
@@ -47,14 +47,60 @@ namespace MarketExpress.Infrastructure.Repositories
 
         public async Task<List<Store>> GetAllActiveStoreAsync()
         {
-            var stores = await _dbContext.Stores.Include(e=>e.Owner).Where(e => e.StoreStatus == enStoreStatus.Approved && e.IsActive).ToListAsync();
+            var stores = await _dbContext.Stores.Where(e => e.StoreStatus == enStoreStatus.Approved && e.IsActive).ToListAsync();
             return stores;
         }
 
         public async Task<Store> GetStoreByAdminAsync(string ownerId)
         {
-            var store = await _dbContext.Stores.FirstOrDefaultAsync(e => e.OwnerId == ownerId);
+            var store = await _dbContext.Stores.FirstOrDefaultAsync(e => e.OwnerId == ownerId&&e.IsActive);
             return store;
+        }
+
+        public async Task<bool> IsNameExistAsync(string name, int storeId)
+        {
+            var res = await _dbContext.Stores.FirstOrDefaultAsync(e => e.StoreName.ToLower() == name && e.StoreStatus != enStoreStatus.Rejected && e.StoreStatus != enStoreStatus.Cancelled && e.StoreStatus != enStoreStatus.Deleted && e.Id!=storeId);
+            return res != null;
+        }
+
+        public async Task<List<Store>> GetAllRequestStoresByUserAsync(string userId)
+        {
+            var res = await _dbContext.Stores.Where(e => e.OwnerId == userId).ToListAsync();
+            return res;
+        }
+
+        public async Task<List<Store>> GetAllRequestStoreByFilter(enStoreStatus storeStatus,int pageNumber,int pageSize)
+        {
+            var stors = await _dbContext.Stores.Where(e => e.StoreStatus == storeStatus).OrderByDescending(e=>e.CreatedAt).Skip(pageSize*(pageNumber-1)).Take(pageSize).ToListAsync();
+            return stors;
+        }
+
+        public async Task<List<Store>> GetFilterRequestStoresByUserAsync(string userId,enStoreStatus storeStatus)
+        {
+            var res = await _dbContext.Stores.Where(e => e.OwnerId == userId && e.StoreStatus==storeStatus).ToListAsync();
+            return res;
+        }
+
+        public async Task<bool> IsPhoneNumberExistAsync(string phoneNumber)
+        {
+            var res= await _dbContext.Stores.AnyAsync(e => e.PhoneNumber == phoneNumber && e.StoreStatus != enStoreStatus.Rejected && e.StoreStatus != enStoreStatus.Cancelled && e.StoreStatus != enStoreStatus.Deleted);
+            return res;
+        }
+
+        public async Task<bool> IsEmailExistAsync(string email)
+        {
+            var checkEmail=email.Trim().ToLower();
+            var res=await _dbContext.Stores.AnyAsync(e => e.Email.ToLower() == checkEmail && e.StoreStatus != enStoreStatus.Rejected && e.StoreStatus != enStoreStatus.Cancelled && e.StoreStatus != enStoreStatus.Deleted);
+            return res;
+        }
+
+
+        public async Task<Wallet?> GetWalletByStoreIdAsync(int storeId)
+        {
+            var store = await _dbContext.Stores.FirstOrDefaultAsync(e => e.Id == storeId);
+           
+            var res = await _dbContext.Wallets.FirstOrDefaultAsync(e => e.UserId == store.OwnerId);
+            return res;
         }
     }
 }

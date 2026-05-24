@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace MarketExpress.Application.Dto.RequestStore.Request
 {
-   public class RequestStoreDto
+    public class RequestStoreDto
     {
 
-        
+
         [Required]
         public string StoreName { get; set; }
         [Required]
@@ -36,9 +36,18 @@ namespace MarketExpress.Application.Dto.RequestStore.Request
         [Required]
         public TimeSpan WorkingHoursEnd { get; set; }
         [Required]
+        public string PhoneNumber { get; set; }
+        [Required]
+        public string Email { get; set; }
+
+        [Required]
         public IFormFile NationalIdFrontImage { get; set; }
         [Required]
         public IFormFile NationalIdBackImage { get; set; }
+        [Required]
+        public IFormFile StoreLicense { get; set; }
+
+
 
 
     }

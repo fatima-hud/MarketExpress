@@ -22,5 +22,16 @@ namespace MarketExpress.Infrastructure.Repositories
             var items= await _dbContext.Orderitems.Where(e=>e.OrderId==orderId).ToListAsync();
             return items;
         }
+
+        public async Task<List<IGrouping<int, OrderItem>>> GroupingItemsForStoresAsync(int orderId)
+        {
+            var res = await _dbContext.Orderitems
+                 .Where(e => e.OrderId == orderId)
+                 .Include(x => x.product)
+                 .GroupBy(x => x.product.StoreId)
+                 .ToListAsync();
+
+            return res;
+        }
     }
 }

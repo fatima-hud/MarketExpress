@@ -1,4 +1,4 @@
-﻿using MarketExpress.Application.Abstacts;
+﻿using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Complaint.Request;
 using MarketExpress.Application.Dto.Complaint.Response;
 using MarketExpress.Core.Entity;
@@ -6,11 +6,6 @@ using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Results;
 using MarketExpress.Infrastructure.Abstacts;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MarketExpress.Application.Implementations
 {
@@ -27,14 +22,18 @@ namespace MarketExpress.Application.Implementations
             _complaintRepository = complaintRepository;
         }
 
-        public async Task<Result<ResponseAddComplaintDto>> AddAsync(string CustomerId,RequestAddComplaintDto request)
+        public async Task<Result<ResponseAddComplaintDto>> AddAsync(string CustomerId, RequestAddComplaintDto request)
         {
             var user = await _userManager.FindByIdAsync(CustomerId);
             if (user == null)
-                return Result<ResponseAddComplaintDto>.NotFound("User not found");
+                return Result<ResponseAddComplaintDto>.NotFound("مستخدم غير موجود");
+            if (user.IsBanned)
+            {
+                return Result<ResponseAddComplaintDto>.BadRequest("مستخدم محظور");
+            }
             var store = await _storeRepository.GetByIdAsync(request.StoreId);
             if (store == null)
-                return Result<ResponseAddComplaintDto>.NotFound("Store not found");
+                return Result<ResponseAddComplaintDto>.NotFound("متجر غير موجود");
             var complaint = new Complaint
             {
                 CustomerId = CustomerId,
@@ -44,7 +43,7 @@ namespace MarketExpress.Application.Implementations
                 CreatedAt = DateTime.UtcNow
             };
             await _complaintRepository.AddAsync(complaint);
-           
+
             var response = new ResponseAddComplaintDto
             {
                 Id = complaint.Id,
@@ -66,15 +65,19 @@ namespace MarketExpress.Application.Implementations
         public async Task<Result<List<ResponseGetComplaintDto>>> GetAllAsync(string StoreOwnerId)
         {
             var owner = await _userManager.FindByIdAsync(StoreOwnerId);
-            if (owner==null)
+            if (owner == null)
             {
-                return Result<List<ResponseGetComplaintDto>>.NotFound("Store owner not found");
+                return Result<List<ResponseGetComplaintDto>>.NotFound("صاحب متجر غير موجود");
 
             }
-            var storeOwner= await _storeRepository.GetStoreByAdminAsync(StoreOwnerId);
-            if (storeOwner== null)
+            if (owner.IsBanned)
             {
-                return Result<List<ResponseGetComplaintDto>>.NotFound("You don't have a store yet");
+                return Result<List<ResponseGetComplaintDto>>.BadRequest("مستخدم محظور");
+            }
+            var storeOwner = await _storeRepository.GetStoreByAdminAsync(StoreOwnerId);
+            if (storeOwner == null)
+            {
+                return Result<List<ResponseGetComplaintDto>>.NotFound("المستخدم ليس لديه متجر بعد");
             }
             var complaints = await _complaintRepository.GetAllComplaintByUserIdAsync(StoreOwnerId);
             var response = complaints.Select(c => new ResponseGetComplaintDto

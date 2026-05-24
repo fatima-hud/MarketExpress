@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Core.Entity;
+using MarketExpress.Core.Enums;
 using MarketExpress.Infrastructure.InfrastructureBases;
 using System;
 using System.Collections.Generic;
@@ -10,10 +11,12 @@ namespace MarketExpress.Infrastructure.Abstacts
 {
    public interface ICartItemRepository:IGenericRepositoryAsync<CartItem>
     {
-        Task<bool>CheckProductExistAsync(int cartId,int productId,string Size,string Color);
+        Task<CartItem> GetExistingItemAsync(int cartId,int productId,enSize Size,string Color);
         Task<CartItem> GetCartItemAsync(int cartId, int productId);
-        Task<List<CartItem>> GetCartItemsByCartId(int cartId);
-        Task<decimal> GetTotalPrice(int cartId);
-        
+        Task<List<CartItem>> GetCartItemsByCartIdAsync(int cartId);
+        Task<List<CartItem>> GetItemsByListIdsAsync(int cartId,List<int>itemsIds);
+        Task<decimal> GetTotalPriceAsync(int cartId);
+        Task<List<IGrouping<int, CartItem>>> GroupingItemsForStoresAsync(int cartId);
+
     }
 }

@@ -1,4 +1,4 @@
-﻿using MarketExpress.Application.Abstacts;
+﻿
 using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Implementations;
 using MarketExpress.Infrastructure.Abstacts;
@@ -11,7 +11,7 @@ namespace MarketExpress.Extensions
         public static void AddApplicationServices(this IServiceCollection services)
         {
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IEmailService, EmailService>();
+           
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
             services.AddScoped<IProductService, ProductService>();
@@ -25,6 +25,9 @@ namespace MarketExpress.Extensions
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+            services.AddScoped<IOrderItemService, OrderItemService>();
+            services.AddScoped<ICheckoutService, CheckoutService>();
+          
             services.AddScoped<IRatingService, RatingService>();
             services.AddScoped<IRatingRepository, RatingRepository>();
             services.AddScoped<IStoreService, StoreService>();
@@ -37,13 +40,33 @@ namespace MarketExpress.Extensions
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IImageService, ImageService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
-            services.AddScoped<ISAdminService, SAdminService>();
+            services.AddScoped<ISuperAdminService, SuperAdminService>();
             services.AddScoped<IStoreRequestService, StoreRequestService>();
             services.AddScoped<IDocumentRepository, DocumentRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
             services.AddScoped<INotificationService, NotificationService>();
-            
+            services.AddScoped<IUserNotificationService, UserNotificationService>();
+            services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+            services.AddScoped<IDeliveryService, DeliveryService>();
+            services.AddScoped<IDeliveryLocationService, DeliveryLocationService>();
+            services.AddScoped<IDeliveryLocationRepository, DeliveryLocationRepository>();
+           services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IOtpCodeService, OtpCodeService>();
+           
+            services.AddScoped<IClothingItemService, ClothingItemService>();
+            services.AddScoped<IClothingItemRepository, ClothingItemRepository>();
+            services.AddScoped<ICommentRepository, CommentRepository>();
+            services.AddScoped<ICommentService, CommentService>();
+            services.AddScoped<IStoreCategoryService, StoreCategoryService>();
+            services.AddScoped<IStoreCategoryRepository, StoreCategoryRepository>();
+            services.AddScoped<IWalletRepository, WalletRepository>();
+            services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<ITransactionRepository, TransactionRepository>();
+            services.AddScoped<ITransactionService, TransactionService>();
+            services.AddScoped<IAesEncryptionService, AesEncryptionService>();
         }
     }
 }

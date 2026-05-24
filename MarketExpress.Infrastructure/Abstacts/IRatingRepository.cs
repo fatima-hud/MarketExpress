@@ -11,6 +11,6 @@ namespace MarketExpress.Infrastructure.Abstacts
 {
     public interface IRatingRepository : IGenericRepositoryAsync<Rating>
     {
-      
+      Task<Rating>GetUserRatingForProductAsync(string userId, int productId);
     }
 }

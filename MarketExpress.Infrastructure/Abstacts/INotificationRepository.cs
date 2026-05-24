@@ -12,7 +12,7 @@ namespace MarketExpress.Infrastructure.Abstacts
 {
    public interface INotificationRepository:IGenericRepositoryAsync<Notification>
     {
-        Task<bool> DuplicateCheckAsync(string createdBy, string title, string message,enNotificationType type);
+        Task<bool> DuplicateCheckAsync(string createdById, string title, string message,enNotificationType type);
 
 
     }

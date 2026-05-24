@@ -13,9 +13,10 @@ namespace MarketExpress.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-           
+            builder.HasQueryFilter(e => !e.IsDeleted);
             builder.Property(e => e.Name).HasMaxLength(50);
             builder.HasMany(e => e.Products).WithOne(e => e.Category).HasForeignKey(e => e.CategoryId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasMany(e=>e.StoreCategories).WithOne(e=>e.Category).HasForeignKey(e=>e.CategoryId).OnDelete(DeleteBehavior.Restrict);
            
         }
     }

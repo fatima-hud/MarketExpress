@@ -13,5 +13,6 @@ namespace MarketExpress.Core.Entity
         public bool IsDeleted { get; set; }
         public DateTime? DeletedAt { get; set; }
         public IEnumerable<Product> Products { get; set; }
+        public ICollection<StoreCategory> StoreCategories { get; set; }
     }
 }

@@ -1,14 +1,10 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Dto.Complaint.Request;
-using MarketExpress.Application.Dto.Message.Response;
+using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Notification.Request;
 using MarketExpress.Application.Dto.Notification.Response;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
 namespace MarketExpress.Controllers
@@ -18,12 +14,14 @@ namespace MarketExpress.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private readonly IUserNotificationService _userNotificationService;
 
-        public NotificationController(INotificationService notificationService)
+        public NotificationController(INotificationService notificationService, IUserNotificationService userNotificationService)
         {
             _notificationService = notificationService;
+            _userNotificationService = userNotificationService;
         }
-        [Authorize(Roles = "Admin")]
+     /*   [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ApiResult<ResponseAddNotificationDto>> AddNotificationAsync([FromBody] RequestAddNotificationDto request)
         {
@@ -64,8 +62,49 @@ namespace MarketExpress.Controllers
             return ApiResult<ResponseReadNotificationDto>.Ok(res.Value);
 
         }
-
-
-
+        [Authorize]
+        [HttpGet("GetAllNotification")]
+        public async Task<ApiResult<List<ResponseGetNotificationDto>>> GetAllNotification()
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiResult<List<ResponseGetNotificationDto>>.BadRequest(ModelState.ToString());
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<List<ResponseGetNotificationDto>>.Unauthorized();
+            }
+            var res = await _userNotificationService.GetAllNotificationByUserAsync(userId);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseGetNotificationDto>>.Ok(res.Value);
         }
+
+        [Authorize]
+        [HttpGet("GetAllUnReadNotification")]
+        public async Task<ApiResult<List<ResponseGetNotificationDto>>> GetAllUnReadNotification()
+        {
+            if (!ModelState.IsValid)
+            {
+                return ApiResult<List<ResponseGetNotificationDto>>.BadRequest(ModelState.ToString());
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<List<ResponseGetNotificationDto>>.Unauthorized();
+            }
+            var res = await _userNotificationService.GetAllUnReadNotificationByUserAsync(userId);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseGetNotificationDto>>.Ok(res.Value);
+        }
+
+        */
+
+    }
 }

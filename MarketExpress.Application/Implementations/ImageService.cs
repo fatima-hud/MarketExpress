@@ -1,29 +1,15 @@
-﻿using Azure.Core;
-using MarketExpress.Application.Abstacts;
+﻿using MarketExpress.Application.Abstracts;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MarketExpress.Application.Implementations
 {
-   public class ImageService:IImageService
+    public class ImageService : IImageService
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly UserManager<User> _userManager;
         
-
-        public ImageService(IHttpContextAccessor httpContextAccessor,UserManager<User>userManager)
-        {
-            _httpContextAccessor = httpContextAccessor;
-          _userManager = userManager;
-       
-        }
+      
 
         public async Task<Result<string>> UploadImageAsync(IFormFile file)
         {
@@ -55,21 +41,12 @@ namespace MarketExpress.Application.Implementations
                 await file.CopyToAsync(stream);
             }
 
-            // بناء الرابط
-            var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext == null)
-            {
-                // إذا لا يوجد HttpContext → رجّع مسار نسبي فقط
-                return Result<string>.Success($"/uploads/{fileName}");
-            }
 
-            var request = httpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var imageUrl = $"{baseUrl}/uploads/{fileName}";
-          
+            var imageUrl = $"/uploads/{fileName}";
+
 
             return Result<string>.Success(imageUrl);
         }
-    
-}
+
+    }
 }

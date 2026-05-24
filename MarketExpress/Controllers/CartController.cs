@@ -1,17 +1,18 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
+using MarketExpress.Application.Abstracts;
+using MarketExpress.Application.Dto.CartItem.Request;
+using MarketExpress.Application.Dto.CartItem.Response;
+using MarketExpress.Application.Dto.Category.Response;
 using MarketExpress.Application.Dto.Request;
 using MarketExpress.Application.Dto.Response;
-using MarketExpress.Application.Implementations;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace MarketExpress.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class CartController : ControllerBase
     {
@@ -26,88 +27,95 @@ namespace MarketExpress.Controllers
 
 
         [Authorize]
-        [HttpPost("AddToCart")]
-        public async Task<ApiResult<ResponseCartItemDto>> AddToCart([FromBody]RequestCartItemDto dto)
+        [HttpPost]
+        public async Task<ApiResult<ResponseCartItemDto>> AddToCart([FromBody] RequestCartItemDto dto)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<ResponseCartItemDto>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseCartItemDto>.BadRequest(errors);
+
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int Id))
+            if (string.IsNullOrEmpty(userId) )
             {
                 return ApiResult<ResponseCartItemDto>.Unauthorized();
             }
-            var res = await _cartItemService.AddAsync(userId,dto);
+            var res = await _cartItemService.AddAsync(userId, dto);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult<ResponseCartItemDto>.Created(res.Value,"sucess");
+            return ApiResult<ResponseCartItemDto>.Created(res.Value, "sucess");
         }
 
         [Authorize]
-        [HttpPut("UpdateCartItem")]
-        public async Task<IActionResult> UpdateCartItem(int cartId, int productId, UpdateCartItemDto dto)
+        [HttpPut]
+        public async Task<ApiResult<ResponseUpdateQuantityItemInCartDto>> UpdateCartItem(int cartItemId,  UpdateCartItemDto request)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseUpdateQuantityItemInCartDto>.BadRequest(errors);
+
             }
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int Id))
+            if (string.IsNullOrEmpty(userId) )
             {
-                return ApiResult<ResponseCartItemDto>.Unauthorized();
+                return ApiResult<ResponseUpdateQuantityItemInCartDto>.Unauthorized();
             }
-            var res = await _cartItemService.UpdateAsync(cartId,productId,dto);
+            var res = await _cartItemService.UpdateAsync(userId,cartItemId,request);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult.Ok();
+            return ApiResult<ResponseUpdateQuantityItemInCartDto>.Ok(res.Value);
         }
         [Authorize]
-        [HttpDelete("DeleteCartItem/{id}")]
-        public async Task<IActionResult> DeleteCartItem(int cartId,List<int> products)
+        [HttpDelete]
+        public async Task<ApiResult> DeleteCartItem( RequestDeleteItemsFromCartDto request)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult.BadRequest(ModelState.ToString());
-            }
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult.BadRequest(errors);
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int Id))
-            {
-                return ApiResult<ResponseCartItemDto>.Unauthorized();
             }
-            var res = await _cartItemService.DeleteAsync(cartId,products);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId) )
+            {
+                return ApiResult.Unauthorized();
+            }
+            var res = await _cartItemService.DeleteAsync(userId,request);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult.Ok();
+            return ApiResult.Ok("Deleted sucessfuly");
         }
 
         [Authorize]
-        [HttpGet("GetCartItems")]
-        public async Task<IActionResult> GetCartItems(int cartId)
+        [HttpGet]
+        public async Task<ApiResult<ResponseGetInfoCartDto>> GetCartItems()
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseGetInfoCartDto>.BadRequest(errors);
+
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int Id))
+            if (string.IsNullOrEmpty(userId))
             {
-                return ApiResult<ResponseCartItemDto>.Unauthorized();
+                return ApiResult<ResponseGetInfoCartDto>.Unauthorized();
             }
-            var res = await _cartItemService.GetItemsFromCartIdAsync(cartId);
+            var res = await _cartItemService.GetItemsFromCartIdAsync(userId);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult.Ok();
+            return ApiResult<ResponseGetInfoCartDto>.Ok(res.Value);
         }
 
     }

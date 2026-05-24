@@ -1,24 +1,15 @@
-﻿using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Abstracts;
-using MarketExpress.Application.Dto.Authontication.Request;
-using MarketExpress.Application.Dto.Product.Response;
+﻿using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.RequestStore.Request;
 using MarketExpress.Application.Dto.RequestStore.Response;
+using MarketExpress.Application.Dto.Store.Response;
 using MarketExpress.Core.Entity;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Enums;
 using MarketExpress.Core.Helping;
 using MarketExpress.Core.Results;
 using MarketExpress.Infrastructure.Abstacts;
+using MarketExpress.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-
 namespace MarketExpress.Application.Implementations
 {
     public class StoreRequestService : IStoreRequestService
@@ -30,330 +21,385 @@ namespace MarketExpress.Application.Implementations
         private readonly IStoreRepository _storeRepository;
         private readonly IDocumentRepository _documentRepository;
         private readonly IImageService _imageService;
-
-        public StoreRequestService(IUserRepository userRepository, UserManager<User> userManager, IUserService userService, IEmailService emailService, IStoreRepository storeRepository, IImageService imageService,IDocumentRepository documentRepository)
+        private readonly IOtpCodeService _otpCodeService;
+        
+        public StoreRequestService(IUserRepository userRepository, UserManager<User> userManager, IUserService userService, IEmailService emailService, IStoreRepository storeRepository, IImageService imageService, IDocumentRepository userDocumentRepository,IOtpCodeService otpCodeService)
         {
             _userRepository = userRepository;
             _userManager = userManager;
             _userService = userService;
             _emailService = emailService;
             _storeRepository = storeRepository;
-          
             _imageService = imageService;
-            _documentRepository = documentRepository;
+            _documentRepository = userDocumentRepository;
+            _otpCodeService = otpCodeService;
         }
-
         public async Task<Result<ResponseRequestStoreDto>> AddAsync(string userId, RequestStoreDto request)
         {
-            using var trans=await _storeRepository.BeginTransactionAsync();
+            if (string.IsNullOrEmpty(request.StoreName))
+            {
+                return  Result < ResponseRequestStoreDto >.BadRequest("اسم متجر مطلوب");
+            }
+            if (string.IsNullOrEmpty(request.Address))
+            {
+                return Result<ResponseRequestStoreDto>.BadRequest("عنوان متجر مطلوب");
+            }
+            if (string.IsNullOrEmpty(request.Email))
+            {
+                return Result<ResponseRequestStoreDto>.BadRequest("ايميل متجر مطلوب");
+            }
+            if (string.IsNullOrEmpty(request.PhoneNumber))
+            {
+                return Result<ResponseRequestStoreDto>.BadRequest("رقم هاتف المتجر مطلوب ");
+            }
+
+                using var trans = await _storeRepository.BeginTransactionAsync();
             try
             {
-                if (string.IsNullOrWhiteSpace(request.StoreName))
-                    return Result<ResponseRequestStoreDto>.BadRequest("Store name is required");
-
-                if (string.IsNullOrWhiteSpace(request.Description))
-                    return Result<ResponseRequestStoreDto>.BadRequest("Description is required");
-
-                if (string.IsNullOrWhiteSpace(request.Address))
-                    return Result<ResponseRequestStoreDto>.BadRequest("Address is required");
-
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return Result<ResponseRequestStoreDto>.NotFound("Not found user");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.NotFound("مستخدم غير موجود");
                 }
                 if (user.IsBanned)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("This user is banned");
-
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("مستخدم محظور");
                 }
-
                 if (!user.EmailConfirmed)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("This email is not confirm");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("الايميل غير مؤكد");
                 }
-
                 var isUserHasStore = await _storeRepository.IsUserExistByIdAndStatueApprovedAsync(userId);
                 if (isUserHasStore)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("This user is already has store");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("المستخدم يملك متجر مسبقا");
                 }
                 var isUserHasPending = await _storeRepository.IsUserHasPendingStoreAsync(userId);
                 if (isUserHasPending)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("This user is already has request");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("المستخدم لديه طلب مسبقا");
                 }
-
-
-
                 if (user.BirthDate < BirthDateSettings.minDate || user.BirthDate > BirthDateSettings.maxDate)
                 {
-
-                    return Result<ResponseRequestStoreDto>.BadRequest("Birth date is not valid");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("تاريخ الميلاد غير صحيح");
                 }
                 var age = DateTime.Today.Year - user.BirthDate.Year;
                 if (user.BirthDate.Date > DateTime.Today.AddYears(-age)) age--;
-
-
                 if (age < 18)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("You must be at least 18 years old");
-                }
-                var StoreName = await _storeRepository.IsNameFoundAsync(request.StoreName);
-
-                if (StoreName)
-                {
-                    return Result<ResponseRequestStoreDto>.BadRequest("This store name is already exist");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("عمر المستخدم يجب ان يكون على الاقل 18 سنة");
                 }
                
+                var name= request.StoreName.Trim().ToLower();
+                var StoreName = await _storeRepository.IsNameExistAsync(name);
+                if (StoreName)
+                {
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("اسم المتجر مستخدم مسبقا");
+                }
                 if (request.Latitude < -90 || request.Latitude > 90)
-                    return Result<ResponseRequestStoreDto>.BadRequest("Invalid latitude");
-
+                {
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("خطوط العرض غير صحيحة");
+                }
                 if (request.Longitude < -180 || request.Longitude > 180)
-                    return Result<ResponseRequestStoreDto>.BadRequest("Invalid longitude");
+                {
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("خطوط الطول غير صحيحة");
+                }
                 if (request.WorkingHoursEnd <= request.WorkingHoursStart)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("End time must be greater than start time");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("انتهاء ساعات العمل يجب ان يكون اكبر من بداية ساعات العمل");
                 }
-
                 var duration = request.WorkingHoursEnd - request.WorkingHoursStart;
-
                 if (duration.TotalHours > 24)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("Invalid working hours range");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("مجال ساعات العمل غير صحيح");
                 }
-                if (request.WorkingHoursStart >= TimeSpan.FromHours(24) || request.WorkingHoursEnd >=TimeSpan.FromHours(24))
+                if (request.WorkingHoursStart >= TimeSpan.FromHours(24) || request.WorkingHoursEnd >= TimeSpan.FromHours(24))
+                {
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("ساعات العمل غير صحيحة");
+                }
+                if (request.WorkingHoursStart < TimeSpan.Zero || request.WorkingHoursEnd < TimeSpan.Zero)
+                {
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("ساعات العمل غير صحيحة");
+                }
+              
+                    var phoneNumber = request.PhoneNumber.Trim();
+                    var isPhoneNumberValid = await _userService.CheckFormPhoneNumberAsync(phoneNumber);
+                    if (!isPhoneNumberValid)
+                    {
+                        await trans.RollbackAsync();
+                        return Result<ResponseRequestStoreDto>.BadRequest("رقم الهاتف غير صحيح");
+                    }
+                    var isPhoneNumberExistByStore = await _storeRepository.IsPhoneNumberExistAsync(phoneNumber);
+                    if (isPhoneNumberExistByStore)
+                    {
+                        await trans.RollbackAsync();
+                        return Result<ResponseRequestStoreDto>.BadRequest("رقم الهاتف موجود مسبقا");
+                    }
+                    var isPhoneNumberExistByUser = await _userRepository.GetUserByPhoneNumberAsync(phoneNumber);
+                    if (isPhoneNumberExistByUser is not null && isPhoneNumberExistByUser.Id!=userId)
+                    {
+                        await trans.RollbackAsync();
+                        return Result<ResponseRequestStoreDto>.BadRequest("رقم الهاتف موجود مسبقا");
+                    }
+                
+                
+                    var email = request.Email.Trim().ToLower();
+                    var existUser = await _userManager.FindByEmailAsync(email);
 
-                {
-                    return Result<ResponseRequestStoreDto>.BadRequest("Invalid working hours");
-                }
-                if(request.WorkingHoursStart<TimeSpan.Zero || request.WorkingHoursEnd< TimeSpan.Zero)
-                {
-                    return Result<ResponseRequestStoreDto>.BadRequest("Invalid working hours");
-                }
+                    if (existUser != null&&existUser.Id!=userId)
+                    {
+                        await trans.RollbackAsync();
+                        return Result<ResponseRequestStoreDto>.BadRequest("الايميل موجود مسبقا");
+                    }
+                    var FormEmail = await _otpCodeService.CheckFormEmailAsync(email);
+                    if (!FormEmail)
+                    {
+                        await trans.RollbackAsync();
+                        return Result<ResponseRequestStoreDto>.BadRequest("@:البريد الإلكتروني يجب أن يتضمن اسم نطاق صالح ورمز");
+                    }
+                    var isEmailExistByStore= await _storeRepository.IsEmailExistAsync(email);
+                    if (isEmailExistByStore)
+                    {
+                        await trans.RollbackAsync();
+                        return Result<ResponseRequestStoreDto>.BadRequest("الايميل موجود مسبقا");
+                    }
+                
                 var FeaturedImage = await _imageService.UploadImageAsync(request.FeaturedImage);
                 if (FeaturedImage is null)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("Failed to upload featured image");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("فشل في تحميل صورة الغلاف");
                 }
                 var Logo = await _imageService.UploadImageAsync(request.Logo);
                 if (Logo is null)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("Failed to upload Logo image");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("فشل في تحميل صورة شعار المتجر");
                 }
-
                 var NationalIdFrontImage = await _imageService.UploadImageAsync(request.NationalIdFrontImage);
                 if (NationalIdFrontImage is null)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("Failed to upload National ID front image");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("فشل في تحميل صورة الهوية الامامية");
                 }
                 var NationalIdBackImage = await _imageService.UploadImageAsync(request.NationalIdBackImage);
                 if (NationalIdBackImage is null)
                 {
-                    return Result<ResponseRequestStoreDto>.BadRequest("Failed to upload National ID back image");
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("فشل في تحميل صورة الهوية الخلفية");
                 }
+                var StoreLicense = await _imageService.UploadImageAsync(request.StoreLicense);
+                if (StoreLicense is null) {
 
+                    await trans.RollbackAsync();
+                    return Result<ResponseRequestStoreDto>.BadRequest("فشل في تحميل صورة ترخيص المتجر");
 
-
-                var documentNationalIdFront = new UserDocument
-                {
-                    UserId = user.Id,
-                    FilePath = NationalIdFrontImage.Value,
-                    Type = enDocumentType.NationalIdFrontImage
-                };
-                var documentNationalIdBack = new UserDocument
-                {
-                    UserId = user.Id,
-                    FilePath = NationalIdBackImage.Value,
-                    Type = enDocumentType.NationalIdBackImage
-                };
-
-
-
+                }
 
                 var store = new Store
                 {
-
-                  
-                 OwnerId=user.Id,
-
+                    OwnerId = user.Id,
                     StoreName = request.StoreName.Trim(),
-
                     Description = request.Description.Trim(),
-
                     Address = request.Address.Trim(),
-
-
                     FeaturedImage = FeaturedImage.Value,
-
-
                     Logo = Logo.Value,
-
-
                     Latitude = request.Latitude,
-
                     Longitude = request.Longitude,
-
                     WorkingHoursStart = request.WorkingHoursStart,
-
                     WorkingHoursEnd = request.WorkingHoursEnd,
-                    StoreStatus=enStoreStatus.Pending
-                    
-                    
-                  
+                    StoreStatus = enStoreStatus.Pending,
+                    Email = request.Email.Trim(),
+                    PhoneNumber = request.PhoneNumber.Trim(),
+                };
+                await _storeRepository.AddAsync(store);
+
+                var documentNationalIdFront = new Document
+                {
+                    StoreId = store.Id,
+                    OwnerType = enDocumentOwnerType.Store,
+                    FilePath = NationalIdFrontImage.Value,
+                    FileType = enFileDocumentType.NationalIdFrontImage,
+
+                };
+                var documentNationalIdBack = new Document
+                {
+                    StoreId = store.Id,
+                    OwnerType = enDocumentOwnerType.Store,
+                    FilePath = NationalIdBackImage.Value,
+                    FileType = enFileDocumentType.NationalIdBackImage,
+
+                };
+                var documentStoreLicense = new Document
+                {
+                    StoreId = store.Id,
+                    OwnerType = enDocumentOwnerType.Store,
+                    FilePath = StoreLicense.Value,
+                    FileType = enFileDocumentType.StoreLicense,
+
                 };
 
 
+                await _documentRepository.AddAsync(documentNationalIdFront);
+                await _documentRepository.AddAsync(documentNationalIdBack);
+                await _documentRepository.AddAsync(documentStoreLicense);
+                await trans.CommitAsync();
 
-
-               await _documentRepository.AddAsync(documentNationalIdFront);
-               await _documentRepository.AddAsync(documentNationalIdBack);
-
-                await _storeRepository.AddAsync(store);
-              
                 var ret = new ResponseRequestStoreDto
                 {
+                    RequestId = store.Id,
                     StoreName = request.StoreName,
                     status = enStoreStatus.Pending,
                     CreatedAt = store.CreatedAt,
-                    RequestId = store.Id
+
                 };
-                await trans.CommitAsync();
+
                 return Result<ResponseRequestStoreDto>.Success(ret);
             }
             catch (Exception ex)
             {
-               
-                
-            await trans.RollbackAsync();
-                return Result<ResponseRequestStoreDto>.Failure($"Something was wrong {ex.Message}");
-                
-            }
-          
-
-        }
-
-        public async Task<Result<ResponseApprovedStoreRequestDto>> ApprovedAsync(int requestId)
-        {
-          using  var trans = await _storeRepository.BeginTransactionAsync();
-            try
-            {
-                var request = await _storeRepository.GetByIdAsync(requestId);
-                if (request == null)
-                {
-                    return Result<ResponseApprovedStoreRequestDto>.NotFound("Not found request");
-                }
-                if (request.StoreStatus == enStoreStatus.Approved)
-                {
-
-                    return Result<ResponseApprovedStoreRequestDto>.BadRequest("This store already approved ");
-                }
-                if (request.StoreStatus == enStoreStatus.Rejected)
-                {
-
-                    return Result<ResponseApprovedStoreRequestDto>.BadRequest("This store already rejected ");
-                }
-                var user = await _userManager.FindByIdAsync(request.OwnerId);
-                if (user == null)
-                    return Result<ResponseApprovedStoreRequestDto>.NotFound("Owner user not found");
-                await _userManager.AddToRoleAsync(user, "Admin");
-
-                var ApprovedTime = DateTime.UtcNow;
-                request.ApprovedAt = ApprovedTime;
-                request.StoreStatus = enStoreStatus.Approved;
-                request.IsActive = true;
-                await _storeRepository.UpdateAsync(request);
-                var ret = new ResponseApprovedStoreRequestDto
-                {
-                    StoreName = request.StoreName,
-                    ApprovedAt = ApprovedTime,
-                    RequestId = requestId,
-                    status = enStoreStatus.Approved
-
-
-                };
-                await trans.CommitAsync();
-                return Result<ResponseApprovedStoreRequestDto>.Success(ret, " Your request has been approved");
-            }
-            catch (Exception ex)
-            {
-               await trans.RollbackAsync();
-                return Result<ResponseApprovedStoreRequestDto>.Failure($"Something was wrong {ex.Message}");
+                await trans.RollbackAsync();
+                return Result<ResponseRequestStoreDto>.Failure($"حدث خطا داخلي {ex.Message}");
             }
         }
 
-     /*   public async Task<Result<List<ResponsePendingStoreDto>> GetAllPendingStore()
+        public async Task<Result<List<ResponseOwnerStoreDto>>> GetAllRequestStoreByUserAsync(string userId)
         {
-            var stores = await _storeRepository.GetAllPendingStoreAsync();
-            if(stores is null)
+            var res = await _storeRepository.GetAllRequestStoresByUserAsync(userId);
+            var ret = new List<ResponseOwnerStoreDto>();
+            if(res is null)
             {
-                return Result<List<ResponsePendingStoreDto>>.NotFound("Not found any pending store");
+                return Result<List<ResponseOwnerStoreDto>>.Success(ret);
             }
-            var ret= new List<ResponsePendingStoreDto>();
-
-            ret = stores.Select(async e => new ResponsePendingStoreDto
+             ret = res.Select(e => new ResponseOwnerStoreDto
             {
                 Id = e.Id,
-                OwnerId = e.OwnerId,
                 StoreName = e.StoreName,
-                StoreStatus = e.StoreStatus,
+                StoreEmail = e.Email,
+                StorePhoneNumber = e.PhoneNumber,
                 Address = e.Address,
+                StoreStatus = e.StoreStatus,
+                Description = e.Description,
+                Longitude = e.Longitude,
+                Latitude = e.Latitude,
                 WorkingHoursStart = e.WorkingHoursStart,
                 WorkingHoursEnd = e.WorkingHoursEnd,
                 CreatedAt = e.CreatedAt,
+                ApprovedAt = e.ApprovedAt,
+                IsDeleted = e.IsDeleted,
+                DeletedAt = e.DeletedAt,
+                FeaturedImage = e.FeaturedImage,
+
+                Logo = e.Logo,
 
                 IsActive = e.IsActive,
-                Description = e.Description,
-                Latitude = e.Latitude,
-                Longitude = e.Longitude,
-                Logo = e.Logo,
-                FeaturedImage = e.FeaturedImage,
-                NationalIdFrontImage = await _userRepository.GetNationalIdFrontImageByUser(OwnerId),
-                NationalIdBackImage=await _userRepository.GetNationalIdBackImageByUser(OwnerId)
+
+
+                Note = e.Note,
+                RejectedAt = e.RejectedAt,
 
 
             }).ToList();
-           
-        }*/
+            return Result<List<ResponseOwnerStoreDto>>.Success(ret);  
 
-        public async Task<Result<ResponseRejectedStoreRequestDto>> RejectedAsync(RequestRejectdDto dto)
+
+        }
+
+        public async Task<Result<ResponseGetFilesByStoreDto>> GetFilesByStoreAsync(string userId, int storeId)
         {
-            var request = await _storeRepository.GetByIdAsync(dto.RequestId);
-            if (request == null)
+            var store = await _storeRepository.GetByIdAsync(storeId);
+            if (store == null)
             {
-                return Result<ResponseRejectedStoreRequestDto>.NotFound("Not found request");
+                return Result<ResponseGetFilesByStoreDto>.NotFound("متجر غير موجود ");
             }
-            if (request.StoreStatus == enStoreStatus.Approved)
+            var currentUser = await _userManager.FindByIdAsync(userId);
+            if (currentUser is null)
             {
-
-                return Result<ResponseRejectedStoreRequestDto>.BadRequest("This store already approved ");
+                return Result<ResponseGetFilesByStoreDto>.NotFound("مالك المتجر غير موجود");
             }
-            if (request.StoreStatus == enStoreStatus.Rejected)
+            var isSuperAdmin = await _userManager.IsInRoleAsync(currentUser, "SuperAdmin");
+            if (userId != store.OwnerId && !isSuperAdmin)
             {
-
-                return Result<ResponseRejectedStoreRequestDto>.BadRequest("This store  already rejected ");
+                return Result<ResponseGetFilesByStoreDto>.BadRequest("المستخدم غير مصرح له رؤية الملفات");
             }
-
-            var rejectedTime = DateTime.UtcNow;
-            request.RejectedAt = rejectedTime;
-            request.StoreStatus = enStoreStatus.Rejected;
-            request.Note = dto.RejectionReason;
-            await _storeRepository.UpdateAsync(request);
-            var ret = new ResponseRejectedStoreRequestDto
+            var frontImage = await _documentRepository.GetStoreDocumentByNationalIdFrontImageAsync(storeId);
+            if (frontImage is null)
             {
-                StoreName = request.StoreName,
-                RejectedAt =rejectedTime ,
-                RequestId = request.Id,
-                status = enStoreStatus.Rejected,
-                Note=dto.RejectionReason
-
-
+                return Result<ResponseGetFilesByStoreDto>.NotFound("صورة الهوية الامامية غير موجودة");
+            }
+            var backImage = await _documentRepository.GetStoreDocumentByNationalIdBackImageAsync(storeId);
+            if (backImage is null)
+            {
+                return Result<ResponseGetFilesByStoreDto>.NotFound("صورة الهوية الخلفية غير موجودة");
+            }
+            var license= await _documentRepository.GetStoreDocumentByStoreLicenseImageAsync(storeId);
+            if(license is null)
+            {
+                return Result<ResponseGetFilesByStoreDto>.NotFound("صورة ترخيص المتجر غير موجودة");
+            }
+            var ret = new ResponseGetFilesByStoreDto
+            {
+                NationalIdFrontImage = frontImage.FilePath,
+                NationalIdBackImage = backImage.FilePath,
+                StoreLicenseImage= license.FilePath
 
             };
-            return Result<ResponseRejectedStoreRequestDto>.Success(ret, " Your request has been rejected");
+            return Result<ResponseGetFilesByStoreDto>.Success(ret);
         }
-    } 
 
-        
-    
+        public async Task<Result<List<ResponseOwnerStoreDto>>> GetFilterRequestStoresByUserAsync(string userId, enStoreStatus storeStatus)
+        {
+            var res = await _storeRepository.GetFilterRequestStoresByUserAsync(userId,storeStatus);
+            var ret = new List<ResponseOwnerStoreDto>();
+            if (res is null)
+            {
+                return Result<List<ResponseOwnerStoreDto>>.Success(ret);
+            }
+             ret = res.Select(e => new ResponseOwnerStoreDto
+            {
+                Id = e.Id,
+                StoreName = e.StoreName,
+                StoreEmail = e.Email,
+                StorePhoneNumber = e.PhoneNumber,
+                Address = e.Address,
+                StoreStatus = e.StoreStatus,
+                Description = e.Description,
+                Longitude = e.Longitude,
+                Latitude = e.Latitude,
+                WorkingHoursStart = e.WorkingHoursStart,
+                WorkingHoursEnd = e.WorkingHoursEnd,
+                CreatedAt = e.CreatedAt,
+                ApprovedAt = e.ApprovedAt,
+                IsDeleted = e.IsDeleted,
+                DeletedAt = e.DeletedAt,
+                FeaturedImage = e.FeaturedImage,
+
+                Logo = e.Logo,
+
+                IsActive = e.IsActive,
+
+
+                Note = e.Note,
+                RejectedAt = e.RejectedAt,
+
+
+            }).ToList();
+            return Result<List<ResponseOwnerStoreDto>>.Success(ret);
+
+        }
+    }
 }

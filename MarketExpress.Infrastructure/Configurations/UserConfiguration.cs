@@ -15,6 +15,7 @@ namespace MarketExpress.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.Property(x => x.FirstName).HasMaxLength(50);
+            builder.Property(x => x.Gender).HasConversion<string>();
             builder.Property(x => x.LastName).HasMaxLength(50);
             builder.Property(e => e.PhoneNumber).HasMaxLength(10);
            builder

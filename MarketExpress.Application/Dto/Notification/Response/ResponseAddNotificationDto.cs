@@ -17,7 +17,7 @@ namespace MarketExpress.Application.Dto.Notification.Response
      
         public enNotificationType Type { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string CreatedBy { get; set; }
+        public string CreatedById { get; set; }
         public int StoreId { get; set; }
         public string StoreName {  get; set; }
         public bool IsGlobal { get; set; }

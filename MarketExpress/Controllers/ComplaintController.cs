@@ -1,12 +1,10 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
+using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Complaint.Request;
 using MarketExpress.Application.Dto.Complaint.Response;
-using MarketExpress.Application.Dto.Response;
 using MarketExpress.Hubs;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
@@ -25,7 +23,7 @@ namespace MarketExpress.Controllers
             _complaintService = complaintService;
             _hubContext = hubContext;
         }
-        [HttpPost]
+     /*   [HttpPost]
         [Authorize(Roles = "User")]
         public async Task<ApiResult<ResponseAddComplaintDto>> AddComplaint([FromBody] RequestAddComplaintDto request)
         {
@@ -58,6 +56,6 @@ namespace MarketExpress.Controllers
             if (!result.IsSuccess)
                 return this.ToApiResult(result);
             return ApiResult<List<ResponseGetComplaintDto>>.Ok(result.Value);
-        }
+        }*/
     }
 }

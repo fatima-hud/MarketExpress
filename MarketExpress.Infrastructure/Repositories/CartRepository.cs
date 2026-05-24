@@ -17,7 +17,7 @@ namespace MarketExpress.Infrastructure.Repositories
         {
         }
 
-        public async Task<Cart> GetCartByUserId(string userId, int storeId)
+        public async Task<Cart> GetCartByUserIdAsync(string userId)
         {
             var res =await _dbContext.Carts.FirstOrDefaultAsync(e=>e.UserId==userId);
             return res;
@@ -26,10 +26,6 @@ namespace MarketExpress.Infrastructure.Repositories
 
        
 
-        public async Task<bool> IsUserHasCart(string userId, int storeId)
-        {
-            var cart = await _dbContext.Carts.FirstOrDefaultAsync(e=>e.UserId==userId );
-            return cart!=null;
-        }
+      
     }
 }

@@ -11,5 +11,7 @@ namespace MarketExpress.Infrastructure.Abstacts
    public interface IUserNotificationRepository:IGenericRepositoryAsync<UserNotification>
     {
         Task<UserNotification?> GetNotificationByUserAsync(string userId, int notificationId);
+        Task<List<UserNotification>> GetAllNotificationByUserAsync(string userId);
+        Task<List<UserNotification>> GetAllUnReadNotinficationByUserAsync(string userId);
     }
 }

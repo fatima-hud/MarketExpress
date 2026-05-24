@@ -10,8 +10,8 @@ namespace MarketExpress.Infrastructure.Abstacts
 {
     public interface ICartRepository:IGenericRepositoryAsync<Cart>
     {
-        Task<bool> IsUserHasCart(string userId,int storeId);
-        Task<Cart>GetCartByUserId(string userId,int storeId);
+      
+        Task<Cart>GetCartByUserIdAsync(string userId);
         
     }
 }

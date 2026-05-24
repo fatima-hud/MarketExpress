@@ -1,15 +1,7 @@
-﻿using MarketExpress.Application.Abstacts;
-using MarketExpress.Core.Entity;
+﻿using MarketExpress.Application.Abstracts;
 using MarketExpress.Core.Entity.Identity;
-using MarketExpress.Core.Results;
 using MarketExpress.Infrastructure.Abstacts;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MarketExpress.Application.Implementations
 {
@@ -24,25 +16,25 @@ namespace MarketExpress.Application.Implementations
             _userManager = userManager;
         }
 
-       /* public async Task<Result> AddCartAsync(string userId)
-        {
-            var user= await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Result.NotFound("Not Found UserId");
-            }
-            if (await _cartRepository.IsUserHasCart(userId,storeId))
-            {
-                return Result.BadRequest("User Has Cart");
-            }
-            var res = new Cart
-            {
-                UserId = userId
-            };
-            await _cartRepository.AddAsync(res);
+        /* public async Task<Result> AddCartAsync(string userId)
+         {
+             var user= await _userManager.FindByIdAsync(userId);
+             if (user == null)
+             {
+                 return Result.NotFound("Not Found UserId");
+             }
+             if (await _cartRepository.IsUserHasCart(userId,storeId))
+             {
+                 return Result.BadRequest("User Has Cart");
+             }
+             var res = new Cart
+             {
+                 UserId = userId
+             };
+             await _cartRepository.AddAsync(res);
 
 
-            return Result.Success();
-        }*/
+             return Result.Success();
+         }*/
     }
 }

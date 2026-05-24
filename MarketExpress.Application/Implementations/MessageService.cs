@@ -1,4 +1,4 @@
-﻿using MarketExpress.Application.Abstacts;
+﻿using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Message.Request;
 using MarketExpress.Application.Dto.Message.Response;
 using MarketExpress.Core.Entity;
@@ -6,13 +6,6 @@ using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Results;
 using MarketExpress.Infrastructure.Abstacts;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MarketExpress.Application.Implementations
 {
@@ -34,22 +27,26 @@ namespace MarketExpress.Application.Implementations
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
             {
-                return Result<List<ResponseGetMessageDto>>.NotFound("User not found");
+                return Result<List<ResponseGetMessageDto>>.NotFound("مستخدم غير موجود");
+            }
+            if (user.IsBanned)
+            {
+                return Result<List<ResponseGetMessageDto>>.BadRequest("مستخدم محظور");
             }
             var complaint = await _complaintRepository.GetByIdAsync(complaintId);
             if (complaint is null)
             {
-                return Result<List<ResponseGetMessageDto>>.NotFound("Complaint not found");
+                return Result<List<ResponseGetMessageDto>>.NotFound("شكوى غير موجودة");
             }
             var isUserInvolved = complaint.CustomerId == userId || complaint.StoreOwnerId == userId;
             if (!isUserInvolved)
             {
-                return Result<List<ResponseGetMessageDto>>.BadRequest("You are not joined to send messages for this complaint");
+                return Result<List<ResponseGetMessageDto>>.BadRequest("انت غير منضم الى هذه المحادثة");
             }
             var messages = await _messageRepository.GetAllMessageByComplaintIdAsync(complaintId);
             if (messages == null || messages.Count == 0)
             {
-                return Result<List<ResponseGetMessageDto>>.NotFound("No messages found for this complaint");
+                return Result<List<ResponseGetMessageDto>>.NotFound("لا يوجد رسائل في هذه الشكوى");
             }
             var response = messages.Select(m => new ResponseGetMessageDto
             {
@@ -59,7 +56,7 @@ namespace MarketExpress.Application.Implementations
                 SenderId = m.SenderId,
                 MessageText = m.MessageText,
                 SentAt = m.SentAt
-                
+
             }).ToList();
             return Result<List<ResponseGetMessageDto>>.Success(response);
 
@@ -68,51 +65,60 @@ namespace MarketExpress.Application.Implementations
         public async Task<Result> RemoveMessageAsync(string SenderId, RequestRemoveMessageDto request)
         {
             var user = await _userManager.FindByIdAsync(SenderId);
-            if(user is null)
+            if (user is null)
             {
-                return Result.NotFound("User not found");
+                return Result.NotFound("مستخدم غير موجود");
+            }
+            if (user.IsBanned)
+            {
+                return Result.BadRequest("مستخدم محظور");
             }
             var complaint = await _complaintRepository.GetByIdAsync(request.ComplaintId);
-            if(complaint is null)
+            if (complaint is null)
             {
-                return Result.NotFound("Complaint not found");
+                return Result.NotFound("شكوى غير موجودة");
             }
             var message = await _messageRepository.GetByIdAsync(request.MessageId);
             if (message is null)
             {
-                return Result.NotFound("Message not found");    
+                return Result.NotFound("رسائل غير موجودة");
             }
             var isMessageExistComplaint = await _messageRepository.IsMessageFoundByComplaintAsync(request.ComplaintId, request.MessageId);
             if (!isMessageExistComplaint)
             {
-                return Result.BadRequest("This message does not belong to this complaint");
+                return Result.BadRequest("هذه رسالة غير تابعة للشكوى");
             }
             var isUserInvolved = complaint.CustomerId == SenderId || complaint.StoreOwnerId == SenderId;
             if (!isUserInvolved)
             {
-                return Result.BadRequest("You are not joined to send messages for this complaint");
+                return Result.BadRequest("انت غير منضم الى هذه المحادثة");
             }
             var isUserSend = message.SenderId == SenderId;
             if (!isUserSend)
             {
-                return Result.BadRequest("This message is not for you");
-                
+                return Result.BadRequest("الرسالة ليست لك");
+
             }
             await _messageRepository.DeleteAsync(message);
-            return Result.Success("Message is deleted successfuly");
+            return Result.Success("تم حذف الرسالة بنجاح");
         }
 
         public async Task<Result<ResponseMessageDto>> SendMessageAsync(string SenderId, RequestAddMessageDto request)
         {
             var user = await _userManager.FindByIdAsync(SenderId);
             if (user == null)
-                return Result<ResponseMessageDto>.NotFound("User not found");
+                return Result<ResponseMessageDto>.NotFound("مستخدم غير موجود");
+            if (user.IsBanned)
+            {
+                return Result<ResponseMessageDto>.BadRequest("مستخدم محظور");
+            }
             var complaint = await _complaintRepository.GetByIdAsync(request.ComplaintId);
             if (complaint == null)
-                return Result<ResponseMessageDto>.NotFound("Complaint not found");
+                return Result<ResponseMessageDto>.NotFound("شكوى غير موجودة");
             var isUserInvolved = complaint.CustomerId == SenderId || complaint.StoreOwnerId == SenderId;
-            if (!isUserInvolved) {
-                return Result<ResponseMessageDto>.BadRequest("You are not joined to send messages for this complaint");
+            if (!isUserInvolved)
+            {
+                return Result<ResponseMessageDto>.BadRequest("انت غير منضم الى هذه المحادثة");
             }
 
             var message = new Message
@@ -146,32 +152,36 @@ namespace MarketExpress.Application.Implementations
             var user = await _userManager.FindByIdAsync(SenderId);
             if (user is null)
             {
-                return Result<ResponseUpdateMessageDto>.NotFound("User not found");
+                return Result<ResponseUpdateMessageDto>.NotFound("مستخدم غير موجود");
+            }
+            if (user.IsBanned)
+            {
+                return Result<ResponseUpdateMessageDto>.BadRequest("مستخدم محظور");
             }
             var complaint = await _complaintRepository.GetByIdAsync(request.ComplaintId);
             if (complaint is null)
             {
-                return Result<ResponseUpdateMessageDto>.NotFound("Complaint not found");
+                return Result<ResponseUpdateMessageDto>.NotFound("شكوى غير موجودة");
             }
             var message = await _messageRepository.GetByIdAsync(request.MessageId);
             if (message is null)
             {
-                return Result<ResponseUpdateMessageDto>.NotFound("Message not found");
+                return Result<ResponseUpdateMessageDto>.NotFound("رسالة غير موجودة");
             }
             var isMessageExistComplaint = await _messageRepository.IsMessageFoundByComplaintAsync(request.ComplaintId, request.MessageId);
             if (!isMessageExistComplaint)
             {
-                return Result<ResponseUpdateMessageDto>.BadRequest("This message does not belong to this complaint");
+                return Result<ResponseUpdateMessageDto>.BadRequest("رسالة غير تابعة للشكوى");
             }
             var isUserInvolved = complaint.CustomerId == SenderId || complaint.StoreOwnerId == SenderId;
             if (!isUserInvolved)
             {
-                return Result<ResponseUpdateMessageDto>.BadRequest("You are not joined to send messages for this complaint");
+                return Result<ResponseUpdateMessageDto>.BadRequest("انت غير منضم الى هذه المحادثة");
             }
             var isUserSend = message.SenderId == SenderId;
             if (!isUserSend)
             {
-                return Result<ResponseUpdateMessageDto>.BadRequest("This message is not for you");
+                return Result<ResponseUpdateMessageDto>.BadRequest("رسالة ليست لك");
 
             }
             message.MessageText = request.MessageText;
@@ -182,7 +192,7 @@ namespace MarketExpress.Application.Implementations
                 MessageId = message.Id,
                 MessageText = message.MessageText
             };
-            return Result<ResponseUpdateMessageDto>.Success(ret,"Message is updated successfuly");
+            return Result<ResponseUpdateMessageDto>.Success(ret, "تم تعديل الرسالة بنجاح");
         }
 
         public async Task<Result<List<ResponseUpdateMessageDto>>> UpdateReadMessageAsync(string userId, RequestUpdateReadMessageDto request)
@@ -190,21 +200,25 @@ namespace MarketExpress.Application.Implementations
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
             {
-                return Result<List<ResponseUpdateMessageDto>>.NotFound("User not found");
+                return Result<List<ResponseUpdateMessageDto>>.NotFound("مستخدم غير موجود");
+            }
+            if (user.IsBanned)
+            {
+                return Result<List<ResponseUpdateMessageDto>>.BadRequest("مستخدم محظور");
             }
             var complaint = await _complaintRepository.GetByIdAsync(request.ComplaintId);
             if (complaint is null)
             {
-                return Result<List<ResponseUpdateMessageDto>>.NotFound("Complaint not found");
+                return Result<List<ResponseUpdateMessageDto>>.NotFound("شكوى غير موجودة");
             }
-           
-            
+
+
             var isUserInvolved = complaint.CustomerId == userId || complaint.StoreOwnerId == userId;
             if (!isUserInvolved)
             {
-                return Result<List<ResponseUpdateMessageDto>>.BadRequest("You are not joined to send messages for this complaint");
+                return Result<List<ResponseUpdateMessageDto>>.BadRequest("انت غير منضم الى هذه المحادثة");
             }
-            var messages=await _messageRepository.GetAllMessageUnReadAsync(userId, request.ComplaintId);
+            var messages = await _messageRepository.GetAllMessageUnReadAsync(userId, request.ComplaintId);
 
 
             foreach (var msg in messages)
@@ -213,7 +227,7 @@ namespace MarketExpress.Application.Implementations
             }
 
             await _messageRepository.UpdateRangeAsync(messages);
-            var ret=messages.Select(m => new ResponseUpdateMessageDto
+            var ret = messages.Select(m => new ResponseUpdateMessageDto
             {
                 ComplaintId = complaint.Id,
 
@@ -221,9 +235,9 @@ namespace MarketExpress.Application.Implementations
                 MessageText = m.MessageText
             }).ToList();
 
-            return Result<List<ResponseUpdateMessageDto>>.Success( ret,"Message read is updated successfuly");
+            return Result<List<ResponseUpdateMessageDto>>.Success(ret, "تم قراءة رسالة بنجاح");
         }
 
-        
+
     }
 }

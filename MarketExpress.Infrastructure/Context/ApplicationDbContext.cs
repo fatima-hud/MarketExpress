@@ -10,7 +10,8 @@ namespace MarketExpress.Database
 {
     public class ApplicationDbContext : IdentityDbContext
     {
-        public ApplicationDbContext(DbContextOptions options) : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+         : base(options)
         {
         }
 
@@ -19,12 +20,12 @@ namespace MarketExpress.Database
             base.OnModelCreating(builder);
             builder.HasDefaultSchema("dbo");
             builder.ApplyConfigurationsFromAssembly(typeof(UserConfiguration).Assembly);
-         
-           
+
+
+            builder.Entity<Product>().ToTable("Products", "dbo");
 
 
 
-         
             builder.Entity<IdentityUser>().ToTable("Users", "identity");
             builder.Entity<IdentityRole>().ToTable("Roles", "identity");
             builder.Entity<IdentityUserRole<string>>().ToTable("UserRoles", "identity");
@@ -32,7 +33,8 @@ namespace MarketExpress.Database
             builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins", "identity");
             builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims", "identity");
             builder.Entity<IdentityUserToken<string>>().ToTable("UserTokens", "identity");
-            
+
+
             builder.Entity<User>()
                 .HasMany(u => u.Messages)
                 .WithOne(m => m.Sender)
@@ -58,28 +60,37 @@ namespace MarketExpress.Database
 
 
 
-       public DbSet<User> Users { get; set; }
+        public DbSet<User> Users { get; set; }
         public DbSet<OtpCode> OtpCodes { get; set; }
-        public DbSet<Category>Categories { get; set; }
-        public DbSet<Store>Stores { get; set; }
-       
-     
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Store> Stores { get; set; }
+
+
         public DbSet<Rating> Ratings { get; set; }
-        public DbSet<Cart>Carts { get; set; }   
-        public DbSet<CartItem> CartItems { get; set; }  
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> Orderitems { get; set; }
-       
-        public DbSet<ClothingItem> Clothingitems { get; set; }  
-     // public DbSet<UserStoreRole> UserStoreRoles { get; set; }
-        public DbSet<UserRefreshToken>UserRefreshTokens { get; set; }
-       
-               public DbSet<Product>Products { get; set; }
-        public DbSet<UserDocument> Documents {  get; set; }
+
+        public DbSet<ClothingItem> Clothingitems { get; set; }
+
+        public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
+
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Document> Documents { get; set; }
+
         public DbSet<Complaint> Complaints { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<Notification> Notifications {  get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         public DbSet<UserNotification> UserNotifications { get; set; }
+        public DbSet<Delivery> Deliveries { get; set; }
+        public DbSet<DeliveryLocation> DeliveryLocations { get; set; }
+        public DbSet<StoreCategory> StoreCategories { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<Wallet> Wallets { get; set; }
+        public DbSet<TransactionProcess> Transactions { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+
 
     }
 }

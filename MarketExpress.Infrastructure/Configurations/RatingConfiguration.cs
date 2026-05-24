@@ -16,7 +16,7 @@ namespace MarketExpress.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<Rating> builder)
         {
            
-            builder.Property(e => e.Comment).HasMaxLength(100);
+           
         }
     }
 }

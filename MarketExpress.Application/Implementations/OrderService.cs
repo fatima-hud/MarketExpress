@@ -1,6 +1,8 @@
 ﻿using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Dto.Request;
-using MarketExpress.Application.Dto.Response;
+using MarketExpress.Application.Abstracts;
+using MarketExpress.Application.Dto.Notification.Response;
+using MarketExpress.Application.Dto.Order.Request;
+using MarketExpress.Application.Dto.Order.Response;
 using MarketExpress.Core.Entity;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Enums;
@@ -19,108 +21,109 @@ namespace MarketExpress.Application.Implementations
     public class OrderService : IOrderService
     {
         private readonly UserManager<User> _userManager;
-        private readonly IStoreRepository _storeRepository;
+     
         private readonly IOrderRepository _orderRepository;
-        private readonly ICartItemRepository _cartItemRepository;
-        private readonly IUserRepository _userRepository;
-        private readonly ICartRepository _cartRepository;
+        private readonly IOrderItemRepository _orderItemRepository;
+        private readonly IAesEncryptionService _aesEncryptionService;
 
-        public OrderService(UserManager<User> userManager, IStoreRepository storeRepository, IOrderRepository orderRepository, ICartItemRepository cartItemRepository, IUserRepository userRepository, ICartRepository cartRepository)
+        public OrderService(UserManager<User> userManager, IOrderRepository orderRepository, IOrderItemRepository orderItemRepository,IAesEncryptionService aesEncryptionService)
         {
             _userManager = userManager;
-            _storeRepository = storeRepository;
+            
             _orderRepository = orderRepository;
-            _cartItemRepository = cartItemRepository;
-            _userRepository = userRepository;
-            _cartRepository = cartRepository;
-        }
-
-        public async Task<Result<OrderResponseDto>> AddAsync(OrderDto dto,string UserId,int cartId)
-        {
-            var user= await _userManager.FindByIdAsync(UserId);
-            if (user == null)
-            {
-                return Result<OrderResponseDto>.NotFound("not found userid");
-            }
-            var Usercart=await _cartRepository.GetByIdAsync(cartId);
-            if(Usercart == null || Usercart.UserId != UserId)
-            {
-                return Result<OrderResponseDto>.BadRequest("this car is not for this user");
-
-            }
+        
           
-            var phone=await _userManager.GetPhoneNumberAsync(user);
-        /*    var cart= await _cartRepository.GetCartByUserId(user.Id,storeId); 
-            var totalPrice = await _cartItemRepository.GetTotalPrice(cart.Id);*/
-            var fullname= await _userRepository.GetFullNameAsync(UserId);
-            var order = new Order
-            {
-                UserId = user.Id,
-             
-                FullName = fullname,
-                PhoneNumber = phone,
-                Address = dto.Address,
-             //    TotalPrice=totalPrice,
-                Statue = enOrderStatue.Pending,
-                CreatedAt = DateTime.UtcNow
-            };
-            await _orderRepository.AddAsync(order);
-            var res = new OrderResponseDto
-            {
-                Id = order.Id,
-                FullName = order.FullName,
-                TotalPrice = order.TotalPrice,
-                UserId = user.Id,
-              
-                PhoneNumber = phone,
-                Address = dto.Address,
-                Statue = enOrderStatue.Pending,
-                CreatedAt = order.CreatedAt
-
-            };
-            return Result<OrderResponseDto>.Success(res);
-
-
-
-
+            _orderItemRepository = orderItemRepository;
+            _aesEncryptionService = aesEncryptionService;
         }
 
-        public async Task<Result<List<Order>>> GetOrdersAsync(string userId)
+        public async Task<Result<List<ResponseGetOrderDto>>> GetAllOrdersAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return Result<List<Order>>.NotFound("not found userId");
+                return Result<List <ResponseGetOrderDto >>.NotFound("مستخدم غير موجود");
             }
-            var orders= await _orderRepository.GetAllOrder(userId);
-            return Result<List<Order>>.Success(orders);
+            if (user.IsBanned)
+            {
+                return Result<List < ResponseGetOrderDto >>.BadRequest("مستخدم محظور");
+            }
+            var orders= await _orderRepository.GetAllOrderAsync(userId);
+            var res = new List<ResponseGetOrderDto>();
+            if (!orders.Any())
+            {
+                return Result<List<ResponseGetOrderDto>>.Success(res);
+            }
+          //  var aes = new AesEncryptionService();
+            res =orders.Select(order => new ResponseGetOrderDto
+            {
+                Id = order.Id,
+              
+                TotalPrice = order.TotalPrice,
+                Address =   _aesEncryptionService.Decrypt(order.Address),
+                Status = order.Status,
+                CreatedAt = order.CreatedAt
+            }).ToList();
+           
+           
+            return Result<List<ResponseGetOrderDto>>.Success(res);
             
         }
 
-        public async Task<Result<OrderResponseDto>> Updatesync(UpdateOrderStatusDto dto,int orderId)
+     
+
+        public async Task<Result<ResponseGetOrderDto>> UpdateOrderStatusAsync(string userId, RequestUpdateOrderStatusDto dto,int orderId)
         {
             var order=await _orderRepository.GetByIdAsync(orderId);
             if (order==null)
             {
-                return Result<OrderResponseDto>.NotFound("not found");
+                return Result<ResponseGetOrderDto>.NotFound("طلب غير موجود");
             }
-            order.Statue=dto.status;
+            var user= await _userManager.FindByIdAsync(userId);
+            if (user==null)
+            {
+                return Result<ResponseGetOrderDto>.NotFound("مستخدم غير موجود");
+
+            }
+            if (user.IsBanned)
+            {
+                return Result<ResponseGetOrderDto>.BadRequest("مستخدم محظور");
+            }
+            var superAdminRole = await _userManager.GetRolesAsync(user);
+            var isSuperAdmin = superAdminRole.Contains("SuperAdmin");
+          
+            if (userId != order.UserId&&!isSuperAdmin)
+            {
+                return Result<ResponseGetOrderDto>.BadRequest("المستخدم غير مصرح له الوصول للطلب");
+            }
+            if(order.Status!= enOrderStatus.Processing)
+            {
+                return Result<ResponseGetOrderDto>.BadRequest( $"لا يمكن تعديل الطلب لأنه في حالة {order.Status} بالفعل.");
+            }
+           if (userId == order.UserId && dto.status != enOrderStatus.Cancelled)
+            {
+                return Result<ResponseGetOrderDto>.BadRequest("لا يُسمح للمستخدم بتعديل حالة الطلب إلا للإلغاء فقط ");
+            }
+            /*  if(isSuperAdmin&&dto.status!=enOrderStatus.Rejected)
+              {
+                  return Result<ResponseGetOrderDto>.BadRequest("يمكن للمسؤول العام تغيير حالة الطلب إلى مرفوض فقط.");
+              }*/
+
+            var aes = new AesEncryptionService();
+            order.Status=dto.status;
             await _orderRepository.UpdateAsync(order);
-            var res = new OrderResponseDto
+            var res = new ResponseGetOrderDto
             {
                 Id = order.Id,
-                FullName = order.FullName,
+              
                 TotalPrice = order.TotalPrice,
-                UserId = order.UserId,
-                StoreId = order.StoreId,
-                PhoneNumber = order.PhoneNumber,
-                Address = order.Address,
-                Statue = order.Statue,
+                Address = aes.Decrypt(order.Address),
+                Status = order.Status,
                 CreatedAt = order.CreatedAt
 
 
             };
-            return Result<OrderResponseDto>.Success(res);
+            return Result<ResponseGetOrderDto>.Success(res);
 
 
         }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Security.Cryptography.Xml;
 using System.Text;
 
 namespace MarketExpress.Extensions
@@ -28,7 +27,7 @@ namespace MarketExpress.Extensions
                     ValidAudience = configuration["JWT:Audience"],
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"])),
-                    ClockSkew=TimeSpan.Zero
+                    ClockSkew = TimeSpan.Zero
 
                 };
 
@@ -36,8 +35,9 @@ namespace MarketExpress.Extensions
         }
         public static void AddSwaggerGenJwtAuth(this IServiceCollection services)
         {
-            services.AddSwaggerGen(options => {
-               
+            services.AddSwaggerGen(options =>
+            {
+
 
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
@@ -70,6 +70,8 @@ namespace MarketExpress.Extensions
                 } });
 
             });
-        } }}
-    
+        }
+    }
+}
+
 

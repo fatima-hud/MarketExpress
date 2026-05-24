@@ -11,5 +11,6 @@ namespace MarketExpress.Infrastructure.Abstacts
    public interface IOrderItemRepository:IGenericRepositoryAsync<OrderItem>
     {
         Task<List<OrderItem>> GetOrderItemsAsync(int orderId);
+        Task<List<IGrouping<int, OrderItem>>> GroupingItemsForStoresAsync(int orderId);
     }
 }

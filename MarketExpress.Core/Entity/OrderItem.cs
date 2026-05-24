@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MarketExpress.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,8 +14,9 @@ namespace MarketExpress.Core.Entity
         public int ProductId {  get; set; }
         public int Quantity {  get; set; }
         public decimal Price { get; set; }
-        public string Size {  get; set; }
+        public enSize Size {  get; set; }
         public string Color {  get; set; }
+        public string ColorHexCode { get; set; }
         public Order order { get; set; }
         public Product product { get; set; }
     }

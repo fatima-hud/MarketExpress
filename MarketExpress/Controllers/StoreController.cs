@@ -1,22 +1,19 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Dto.Request;
-using MarketExpress.Application.Dto.RequestStore.Request;
-using MarketExpress.Application.Dto.RequestStore.Response;
+using MarketExpress.Application.Abstracts;
+using MarketExpress.Application.Dto.Comment.Response;
+using MarketExpress.Application.Dto.Product.Response;
+using MarketExpress.Application.Dto.Store.Request;
 using MarketExpress.Application.Dto.Store.Response;
-using MarketExpress.Application.Implementations;
+using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Security.Claims;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MarketExpress.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class StoreController : ControllerBase
     {
@@ -26,35 +23,15 @@ namespace MarketExpress.Controllers
         {
             _storeService = storeService;
         }
-       
-     
-        [Authorize(Roles ="SuperAdmin")]
-        [HttpPut ("SoftDelete/{id}")]
 
-        public async Task<ApiResult> DeleteAsync(int id)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return ApiResult.Unauthorized();
-            }
-            if (!ModelState.IsValid)
-            {
-                return ApiResult.BadRequest(ModelState.ToString());
-            }
-            var res = await _storeService.SoftDeleteAsync(id);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult.Ok();
-        }
-     
 
-        [HttpGet("GetAllStores")]
+
+
+
+        [HttpGet]
         public async Task<ApiResult<List<ResponseStoreDto>>> GetAllStores()
         {
-           
+
             var res = await _storeService.GetAllStoresAsync();
             if (!res.IsSuccess)
             {
@@ -62,8 +39,8 @@ namespace MarketExpress.Controllers
             }
             return ApiResult<List<ResponseStoreDto>>.Ok(res.Value);
         }
-        [Authorize(Roles ="Admin")]
-        [HttpGet("GetStoresByAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        [HttpGet]
         public async Task<ApiResult<ResponseOwnerStoreDto>> GetStoresByAdmin()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -78,6 +55,48 @@ namespace MarketExpress.Controllers
             }
             return ApiResult<ResponseOwnerStoreDto>.Ok(res.Value);
         }
+        [Authorize(Roles ="Admin")]
+        [HttpPatch]
+        public async Task<ApiResult<ResponseStoreDto>>UpdateStore(RequestUpdateStoreInfoDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseStoreDto>.BadRequest(errors);
+
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<ResponseStoreDto>.Unauthorized();
+            }
+            var res=await _storeService.UpdateAsync(userId, request);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<ResponseStoreDto>.Ok(res.Value);
+        }
+        [HttpGet]
+        public async Task<ApiResult<List<ResponseGetProductDto>>> GetAllProductsByStore(int storeId)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponseGetProductDto>>.BadRequest(errors);
+
+            }
+            var res=await _storeService.GetAllProductsByStore(storeId);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseGetProductDto>>.Ok(res.Value);
+
+
+        }
+
+
 
 
 
@@ -86,5 +105,5 @@ namespace MarketExpress.Controllers
 
 
     }
-    }
+}
 

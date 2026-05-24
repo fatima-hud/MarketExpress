@@ -18,11 +18,11 @@ namespace MarketExpress.Infrastructure.Repositories
         {
         }
 
-        public async Task<bool> DuplicateCheckAsync(string createdBy, string title, string message,enNotificationType type)
+        public async Task<bool> DuplicateCheckAsync(string createdById, string title, string message,enNotificationType type)
         {
             var fromTime = DateTime.UtcNow.AddSeconds(-10);
             var duplicate = await _dbContext.Notifications.AnyAsync(n =>
-                n.CreatedBy == createdBy &&
+                n.CreatedById == createdById &&
                 n.Title == title &&
                 n.Message == message &&
                 n.Type == type&&

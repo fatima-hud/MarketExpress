@@ -16,10 +16,12 @@ namespace MarketExpress.Core.Entity
         public string Message {  get; set; }
         public enNotificationType Type { get; set; }
         public DateTime CreatedAt {  get; set; }
-        public string CreatedBy { get; set; }
+        public string CreatedById { get; set; }
         public bool IsGlobal { get; set; }
+        public int? StoreId {  get; set; }
+        public Store Store { get; set; }
         public ICollection<UserNotification> UserNotifications {  get; set; }
-        public User OwnerStore { get; set; }
+        public User CreatedBy { get; set; }
        
 
     }

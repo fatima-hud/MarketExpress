@@ -11,6 +11,6 @@ namespace MarketExpress.Infrastructure.Abstacts
   public  interface IOrderRepository:IGenericRepositoryAsync<Order>
         
     {
-        Task<List<Order>> GetAllOrder(string userId);
+        Task<List<Order>> GetAllOrderAsync(string userId);
     }
 }

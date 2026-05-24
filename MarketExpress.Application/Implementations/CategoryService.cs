@@ -1,15 +1,10 @@
-﻿using MarketExpress.Application.Abstacts;
+﻿using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Category.Request;
 using MarketExpress.Application.Dto.Category.Response;
-using MarketExpress.Application.Dto.Request;
 using MarketExpress.Core.Entity;
 using MarketExpress.Core.Results;
 using MarketExpress.Infrastructure.Abstacts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace MarketExpress.Application.Implementations
 {
@@ -22,46 +17,63 @@ namespace MarketExpress.Application.Implementations
             _repository = repository;
         }
 
-        public async Task<Result<CategoryResponse>> AddAsync(AddCategoryRequest request)
+        public async Task<Result<ResponseCategory>> AddAsync(RequestAddCategory request)
         {
-            if (request.Name == null)
+            if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return Result<CategoryResponse>.BadRequest("Field is required");
+                return Result<ResponseCategory>.BadRequest("حقل الاسم مطلوب");
 
             }
-            if (await _repository.IsCategoryFound(request.Name))
+            var name = request.Name.ToLower().Trim();
+            if (await _repository.IsCategoryFound(name))
             {
-                return Result<CategoryResponse>.BadRequest("Category Exist ALready");
+                return Result<ResponseCategory>.BadRequest("الفئة موجودة مسبقا");
             }
             var cat = new Category
             {
-                Name = request.Name
+                Name =name
             };
 
             await _repository.AddAsync(cat);
-            var newCategory = new CategoryResponse
+            var newCategory = new ResponseCategory
             {
                 Id = cat.Id,
                 Name = cat.Name,
             };
-            return Result<CategoryResponse>.Success(newCategory);
+            return Result<ResponseCategory>.Success(newCategory);
         }
 
-        public async Task<Result> SoftDeleteAsync(DeleteCategoryRequest request)
+        public async Task<Result<List<ResponseCategory>>> GetAllCategoryAsync()
         {
-            var category= await _repository.GetByIdAsync(request.CategoryId);
+            var categories = await _repository.GetTableNoTracking().ToListAsync();
+            var ret= new List<ResponseCategory>();
+            if (categories.Count == 0)
+            {
+                return Result<List<ResponseCategory>>.Success(ret);
+            }
+            ret = categories.Select(e => new ResponseCategory
+            {
+                Id = e.Id,
+                Name = e.Name,
+            }).ToList();
+            return Result<List<ResponseCategory>>.Success(ret);
+        }
+
+        public async Task<Result> SoftDeleteAsync(int categoryId)
+        {
+            var category = await _repository.GetByIdAsync(categoryId);
             if (category == null)
             {
-                return Result.NotFound("Category not found");
+                return Result.NotFound("الفئة غير موجودة");
             }
             category.IsDeleted = true;
-            category.DeletedAt= DateTime.UtcNow;
+            category.DeletedAt = DateTime.UtcNow;
 
             await _repository.UpdateAsync(category);
             return Result.Success();
 
         }
 
-       
+
     }
 }

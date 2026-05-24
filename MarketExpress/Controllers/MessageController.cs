@@ -1,13 +1,10 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Dto.Category.Response;
+using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Message.Request;
 using MarketExpress.Application.Dto.Message.Response;
-using MarketExpress.Core.Entity;
 using MarketExpress.Hubs;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
@@ -26,7 +23,7 @@ namespace MarketExpress.Controllers
             _messageService = messageService;
             _hubContext = hubContext;
         }
-        [HttpPost]
+      /*  [HttpPost]
         [Authorize(Roles = "Admin,User")]
         public async Task<ApiResult<ResponseMessageDto>> SendMessage([FromBody] RequestAddMessageDto request)
         {
@@ -92,10 +89,10 @@ namespace MarketExpress.Controllers
                 return this.ToApiResult(result);
 
 
-            /*  await _hubContext.Clients.Group(request.ComplaintId.ToString())
+              await _hubContext.Clients.Group(request.ComplaintId.ToString())
                                         .SendAsync("MessageUpdated", result.Value.MessageId, result.Value.MessageText);
               await _hubContext.Clients.Group(request.ComplaintId.ToString())
-                    .SendAsync("ReceiveMessage", userId, request.MessageText, result.Value.MessageId);*/
+                    .SendAsync("ReceiveMessage", userId, request.MessageText, result.Value.MessageId);
 
 
             await _hubContext.Clients.Group(request.ComplaintId.ToString())
@@ -154,6 +151,6 @@ namespace MarketExpress.Controllers
                 return this.ToApiResult(result);
             return ApiResult<List<ResponseGetMessageDto>>.Ok(result.Value);
 
-        }
+        }*/
     }
 }
