@@ -10,6 +10,6 @@ namespace MarketExpress.Infrastructure.Abstacts
 {
     public interface IRoleRepository :IGenericRepositoryAsync<IdentityRole>
     {
-        Task<string>GetRoleIdByName(string roleName);
+        Task<string?>GetRoleIdByName(string roleName);
     }
 }

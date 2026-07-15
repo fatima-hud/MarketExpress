@@ -16,7 +16,7 @@ namespace MarketExpress.Infrastructure.Configurations
         
 
             builder.Property(e => e.Name).HasMaxLength(50).IsRequired();
-            builder.Property(e => e.Description).HasMaxLength(100);
+            builder.Property(e => e.Description).HasMaxLength(250);
             builder.Property(e => e.Image).HasMaxLength(500);
             builder.Property(p => p.DiscountPercentage).HasColumnType("decimal(5,2)");
             builder.Property(p => p.Price).HasColumnType("decimal(18,2)").IsRequired();
@@ -25,8 +25,10 @@ namespace MarketExpress.Infrastructure.Configurations
             builder.HasQueryFilter(e => !e.IsDeleted);
             builder.Property(p => p.Season).HasConversion<string>();
             builder.HasMany(e => e.Ratings).WithOne(e => e.Product).HasForeignKey(e => e.ProductId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasMany(e=>e.ProductColors).WithOne(e => e.Product).HasForeignKey(e => e.ProductId).OnDelete(DeleteBehavior.Cascade);
+            
 
-       
+
 
             builder.ToTable(t => {
                 t.HasCheckConstraint("CK_Product_Price", "[Price] > 0");

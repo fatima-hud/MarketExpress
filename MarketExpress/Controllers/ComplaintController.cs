@@ -1,8 +1,9 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
+using MarketExpress.Application.Dto.Comment.Response;
 using MarketExpress.Application.Dto.Complaint.Request;
 using MarketExpress.Application.Dto.Complaint.Response;
+using MarketExpress.Application.Services.Complaints;
 using MarketExpress.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ using System.Security.Claims;
 
 namespace MarketExpress.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class ComplaintController : ControllerBase
     {
@@ -23,13 +24,15 @@ namespace MarketExpress.Controllers
             _complaintService = complaintService;
             _hubContext = hubContext;
         }
-     /*   [HttpPost]
+        [HttpPost]
         [Authorize(Roles = "User")]
         public async Task<ApiResult<ResponseAddComplaintDto>> AddComplaint([FromBody] RequestAddComplaintDto request)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<ResponseAddComplaintDto>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseAddComplaintDto>.BadRequest(errors);
+
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -56,6 +59,6 @@ namespace MarketExpress.Controllers
             if (!result.IsSuccess)
                 return this.ToApiResult(result);
             return ApiResult<List<ResponseGetComplaintDto>>.Ok(result.Value);
-        }*/
+        }
     }
 }

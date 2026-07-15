@@ -18,8 +18,8 @@ namespace MarketExpress.Infrastructure.Configurations
          
             builder.Property(e => e.StoreName).HasMaxLength(50);
             builder.Property(e => e.Description).HasMaxLength(100);
-            builder.Property(s => s.Latitude).HasPrecision(9, 6);
-            builder.Property(s => s.Longitude).HasPrecision(9, 6);
+            builder.Property(s => s.Latitude).HasPrecision(10, 7);
+            builder.Property(s => s.Longitude).HasPrecision(10, 7);
             builder.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()").ValueGeneratedOnAdd();
        
             builder.Property(e => e.StoreStatus).HasDefaultValue(enStoreStatus.Pending);
@@ -35,7 +35,7 @@ namespace MarketExpress.Infrastructure.Configurations
 
             builder.HasMany(e => e.StoreCategories).WithOne(e => e.Store).HasForeignKey(e => e.StoreId).OnDelete(DeleteBehavior.Restrict);
            
-
-        }
+            builder.HasOne(e=>e.SocialMediaManager).WithMany(e => e.StoreManagerSocialMedias).HasForeignKey(e => e.SocialMediaManagerUserId).OnDelete(DeleteBehavior.Restrict);
+        } 
     }
 }

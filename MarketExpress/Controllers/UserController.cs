@@ -1,13 +1,8 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
-using MarketExpress.Application.Abstracts;
-using MarketExpress.Application.Dto.RequestStore.Request;
-using MarketExpress.Application.Dto.RequestStore.Response;
-using MarketExpress.Application.Dto.Store.Response;
-using MarketExpress.Application.Implementations;
+using MarketExpress.Application.Dto.User;
+using MarketExpress.Application.Services.Users;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -48,8 +43,35 @@ namespace MarketExpress.Controllers
             else
                 return this.ToApiResult(result);
         }
+        [Authorize]
+        [HttpGet]
+        public async Task<ApiResult<ResponseUserDto>>GetUserProfile()
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseUserDto>.BadRequest(errors);
 
-       
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<ResponseUserDto>.Unauthorized();
+            }
+            var result = await _userService.GetUserAsync(userId);
+
+            if (!result.IsSuccess)
+            {
+                return this.ToApiResult(result);
+               
+            }
+           return ApiResult<ResponseUserDto>.Ok(result.Value);
+                
+        }
+
+
     }
-
 }
+
+
+

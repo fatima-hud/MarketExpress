@@ -15,14 +15,16 @@ namespace MarketExpress.Infrastructure.Abstacts
    public interface IProductRepository:IGenericRepositoryAsync<Product>
     {
         Task<List<Product>> SearchAsync(string Query);
-        Task<List<Product>> FilterAsync(decimal?minPrice, decimal?maxPrice,enType? Type,string?Color,enSize ?Size);
+        Task<List<Product>> FilterAsync(enType? Type,string?Color,enSize ?Size);
 
        Task<bool> IsProductHasSizeAsync(int productId, enSize size);
         Task<bool> IsProductHasColorAsync(int productId, string Color);
         Task<double> GetRatingAsync(int productId);
-        Task<Store> GetStoreByProductIdAsync(int ProductId);
-        Task<List<Product>>GetAllProductByStoreAsync(int StoreId);
-
+        Task<Store> GetStoreByProductIdAsync(int productId);
+        Task<List<Product>>GetAllProductByStoreAsync(int storeId);
+        Task<List<Product>> GetAllDiscountProductsByStoreAsync(int storeId);
+        Task<List<Product>> GetAllDiscountProductsByAllStoresAsync();
+      
 
 
 

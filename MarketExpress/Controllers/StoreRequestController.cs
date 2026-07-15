@@ -1,14 +1,12 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
-using MarketExpress.Application.Dto.Product.Response;
 using MarketExpress.Application.Dto.RequestStore.Request;
 using MarketExpress.Application.Dto.RequestStore.Response;
 using MarketExpress.Application.Dto.Store.Response;
-using MarketExpress.Application.Implementations;
+using MarketExpress.Application.Services.StoreRequests;
+using MarketExpress.Application.Services.Users;
 using MarketExpress.Core.Enums;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -21,7 +19,7 @@ namespace MarketExpress.Controllers
         private readonly IStoreRequestService _storeRequestService;
         private readonly IUserService _userService;
 
-        public StoreRequestController(IStoreRequestService storeRequestService,IUserService userService)
+        public StoreRequestController(IStoreRequestService storeRequestService, IUserService userService)
         {
             _storeRequestService = storeRequestService;
             _userService = userService;
@@ -51,8 +49,8 @@ namespace MarketExpress.Controllers
             return ApiResult<ResponseRequestStoreDto>.Created(res.Value);
         }
         [Authorize]
-        [HttpPut("{storeId}/cancel")]
-        public async Task<ApiResult> CancelRequest(int storeId)
+        [HttpPut("{storeRequestId}/cancel")]
+        public async Task<ApiResult> CancelRequest(int storeRequestId)
         {
             if (!ModelState.IsValid)
             {
@@ -65,12 +63,12 @@ namespace MarketExpress.Controllers
             {
                 return ApiResult.Unauthorized();
             }
-            var result = await _userService.CancelRequestAsync(userId, storeId);
+            var result = await _userService.CancelRequestAsync(userId, storeRequestId);
             if (!result.IsSuccess)
             {
                 return this.ToApiResult(result);
             }
-            return ApiResult.Ok("Cancelled Successfully");
+            return ApiResult.Ok("تم الغاء الطلب بنجاح");
         }
         [Authorize]
         [HttpPut("{storeId}/update")]
@@ -79,7 +77,7 @@ namespace MarketExpress.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult< ResponseUpdateRequestStoreDto>.BadRequest(errors);
+                return ApiResult<ResponseUpdateRequestStoreDto>.BadRequest(errors);
 
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -139,7 +137,7 @@ namespace MarketExpress.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<ApiResult<List<ResponseOwnerStoreDto>>>GetFilterRequestStoreByUser([FromQuery]enStoreStatus storeStatus)
+        public async Task<ApiResult<List<ResponseOwnerStoreDto>>> GetFilterRequestStoreByUser([FromQuery] enStoreStatus storeStatus)
         {
             if (!ModelState.IsValid)
             {
@@ -152,7 +150,7 @@ namespace MarketExpress.Controllers
             {
                 return ApiResult<List<ResponseOwnerStoreDto>>.Unauthorized();
             }
-            var res = await _storeRequestService.GetFilterRequestStoresByUserAsync(userId,storeStatus);
+            var res = await _storeRequestService.GetFilterRequestStoresByUserAsync(userId, storeStatus);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);

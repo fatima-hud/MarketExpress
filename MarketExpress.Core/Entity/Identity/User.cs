@@ -16,8 +16,7 @@ namespace MarketExpress.Core.Entity.Identity
         public List<UserRefreshToken>? RefreshTokens { get; set; }
         public Cart Cart { get; set; }
        
-        public int? StoreId {  get; set; }
-        public Store Store {  get; set; }
+        
         public Wallet Wallet { get; set; }
         public string? ResetPasswordCode { get; set; }
         public DateTime? ResetPasswordCodeExpiry { get; set; }
@@ -33,6 +32,9 @@ namespace MarketExpress.Core.Entity.Identity
         public ICollection<Delivery>? Deliveries { get; set; }
         public ICollection<Store>? Stores { get; set; }
         public ICollection<Comment> Comments {  get; set; }
+        public ICollection<PostReaction> PostReactions { get; set; }
+        public ICollection<StoreFollower> StoreFollowers { get; set; }  
+        public ICollection<Store>StoreManagerSocialMedias { get; set; }
     }
     
 }

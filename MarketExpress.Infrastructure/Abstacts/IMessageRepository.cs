@@ -11,7 +11,7 @@ namespace MarketExpress.Infrastructure.Abstacts
    public interface IMessageRepository:IGenericRepositoryAsync<Message>
     {
         Task<bool>IsMessageFoundByComplaintAsync(int complaintId,int messageId);
-        Task<List<Message>> GetAllMessageUnReadAsync(string userId,int complaintId);
+        Task<int> MarkAsReadAsync(string userId,int complaintId);
         Task<List<Message>> GetAllMessageByComplaintIdAsync(int complaintId);
     }
 }

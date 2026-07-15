@@ -22,6 +22,7 @@ namespace MarketExpress.Application.Dto.Response
         public enSize Size { get; set; }
         public string Color { get; set; }
         public string ColorHexCode {  get; set; }
+
         
     }
 }

@@ -24,5 +24,11 @@ namespace MarketExpress.Infrastructure.Repositories
         
 
     }
+
+        public async Task<Complaint> GetComplaintAsync(string userId, string storeOwnerId)
+        {
+            var res=await _dbContext.Complaints.FirstOrDefaultAsync(c=>c.CustomerId==userId && c.StoreOwnerId==storeOwnerId);
+            return res;
+        }
     }
 }

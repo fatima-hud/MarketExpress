@@ -25,19 +25,12 @@ namespace MarketExpress.Infrastructure.Repositories
 
         }
 
-        public async Task<List<Product>> FilterAsync(decimal? minPrice, decimal? maxPrice, enType? Type, string? Color, enSize? Size)
+        public async Task<List<Product>> FilterAsync( enType? Type, string? Color, enSize? Size)
         {
-            IQueryable<Product> query = _dbContext.Products.Include(e => e.ClothingItems);
+            IQueryable<Product> query = _dbContext.Products.Include(e => e.ProductColors).ThenInclude(e=>e.ProductSizes);
 
 
-            if (minPrice.HasValue)
-            {
-                query = query.Where(e => e.PriceAfterDiscount >= minPrice);
-            }
-            if (maxPrice.HasValue)
-            {
-                query = query.Where(e => e.PriceAfterDiscount <= maxPrice);
-            }
+
 
             if (Type.HasValue)
             {
@@ -45,17 +38,11 @@ namespace MarketExpress.Infrastructure.Repositories
             }
             if (!string.IsNullOrEmpty(Color))
             {
-                query = query.Where(e => e.ClothingItems.Any(c => c.Color.ToLower() == Color.ToLower()));
+                query = query.Where(e => e.ProductColors.Any(c => c.Color.ToLower() == Color.ToLower()));
 
             }
             if (Size.HasValue)
-                query = query.Where(e => e.ClothingItems.Any(c => c.Size == Size.Value));
-
-
-
-
-
-
+                query = query.Where(e => e.ProductColors.Any(c => c.ProductSizes.Any(e=>e.Size==Size.Value) ));
 
             return await query.ToListAsync();
 
@@ -64,48 +51,72 @@ namespace MarketExpress.Infrastructure.Repositories
 
         public async Task<List<Product>> SearchAsync(string query)
         {
-            var lowerQuery = query.ToLower();
+            var terms = query
+                .ToLower()
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-          
-            Enum.TryParse<enType>(query, true, out var productType);
+            IQueryable<Product> products = _dbContext.Products
+                .Include(e=>e.ProductColors).ThenInclude(e => e.ProductSizes);
 
-          
-            Enum.TryParse<enSize>(query, true, out var size);
+            // النوع
+            var parsedType = terms
+                .FirstOrDefault(t => Enum.TryParse<enType>(t, true, out _));
 
-            var products = await _dbContext.Products
-                .Include(e => e.ClothingItems)
-                .Where(e =>
+            if (parsedType != null)
+            {
+                Enum.TryParse(parsedType, true, out enType type);
 
-                    e.Description.ToLower().Contains(lowerQuery) ||
+                products = products.Where(p => p.Type == type);
+            }
 
-                    e.Name.ToLower().Contains(lowerQuery) ||
+            // القياس
+            var parsedSize = terms
+                .FirstOrDefault(t => Enum.TryParse<enSize>(t, true, out _));
 
-                    e.Type == productType ||
+            if (parsedSize != null)
+            {
+                Enum.TryParse(parsedSize, true, out enSize size);
 
-                    e.ClothingItems.Any(o =>
+                products = products.Where(p =>
+                    p.ProductColors.Any(e=>e.ProductSizes.Any(s=>s.Size == size)));
+            }
 
-                        o.Color.ToLower().Contains(lowerQuery) ||
+            // اللون
+            var colors = terms.Where(t =>
+                !Enum.TryParse<enType>(t, true, out _) &&
+                !Enum.TryParse<enSize>(t, true, out _));
 
-                        o.Size == size
-                    )
-                )
-                .ToListAsync();
+            foreach (var color in colors)
+            {
+                products = products.Where(p =>
+                    p.ProductColors.Any(c =>
+                        c.Color.ToLower().Contains(color)
 
-            return products;
+                        ||
+
+                        p.Name.ToLower().Contains(color)
+
+                        ||
+
+                        p.Description.ToLower().Contains(color)
+                    ));
+            }
+
+            return await products.ToListAsync();
         }
-        public async Task<bool>IsProductHasSizeAsync(int productId, enSize size)
+        public async Task<bool>IsProductHasSizeAsync(int productColorId, enSize size)
         {
-            var product = await _dbContext.Products.Include(e => e.ClothingItems).FirstOrDefaultAsync(e => e.Id == productId);
+            var product = await _dbContext.ProductColors.Include(e =>e.ProductSizes).FirstOrDefaultAsync(e => e.Id == productColorId);
             if (product == null)
                 return false;
-            return product.ClothingItems.Any(c => c.Size == size);
+            return product.ProductSizes.Any(c => c.Size == size);
         }
         public async Task<bool> IsProductHasColorAsync(int productId, string Color)
         {
-            var product = await _dbContext.Products.Include(e => e.ClothingItems).FirstOrDefaultAsync(e => e.Id == productId);
+            var product = await _dbContext.Products.Include(e => e.ProductColors).FirstOrDefaultAsync(e => e.Id == productId);
             if (product == null)
                 return false;
-            return product.ClothingItems.Any(c => c.Color.ToLower()==Color.ToLower());
+            return product.ProductColors.Any(c => c.Color.ToLower()==Color.ToLower());
         }
 
         public async Task<double> GetRatingAsync(int productId)
@@ -134,6 +145,20 @@ namespace MarketExpress.Infrastructure.Repositories
             var res = await _dbContext.Products.Where(e => e.StoreId == storeId).ToListAsync();
             return res;
         }
+
+        public async Task<List<Product>> GetAllDiscountProductsByStoreAsync(int storeId)
+        {
+            var dayDate = DateTime.UtcNow;
+             var res= await _dbContext.Products.Where(e => e.StoreId == storeId && e.DiscountPercentage>0 &&e.DiscountStartDate<=dayDate && e.DiscountEndDate>dayDate ).ToListAsync(); 
+            return res;
+        }
+
+        public async Task<List<Product>> GetAllDiscountProductsByAllStoresAsync()
+        {
+            var dayDate = DateTime.UtcNow;
+            var res = await _dbContext.Products.Where(e => e.DiscountPercentage > 0 && e.DiscountStartDate <= dayDate && e.DiscountEndDate > dayDate).ToListAsync();
+            return res;
+        }
     }
 }
 
@@ -141,4 +166,3 @@ namespace MarketExpress.Infrastructure.Repositories
 
 
 
-      

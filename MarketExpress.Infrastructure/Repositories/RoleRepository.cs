@@ -17,10 +17,10 @@ namespace MarketExpress.Infrastructure.Repositories
         {
         }
 
-        public async Task<string> GetRoleIdByName(string roleName)
+        public async Task<string?> GetRoleIdByName(string roleName)
         {
           var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
-            return role.Id;
+            return role?.Id;
         }
     }
 }

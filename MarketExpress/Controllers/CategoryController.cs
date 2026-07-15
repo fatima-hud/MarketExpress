@@ -1,9 +1,9 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Category.Request;
 using MarketExpress.Application.Dto.Category.Response;
 using MarketExpress.Application.Dto.Comment.Response;
+using MarketExpress.Application.Services.Categories;
 using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -68,7 +68,7 @@ namespace MarketExpress.Controllers
             return ApiResult.Ok();
         }
 
-        [Authorize(Roles = "SuperAdmin")]
+        [Authorize(Roles = "SuperAdmin,Admin")]
         [HttpGet]
         public async Task<ApiResult<List<ResponseCategory>>> GetAllAsync()
         {
@@ -88,7 +88,7 @@ namespace MarketExpress.Controllers
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult<List<ResponseCategory>>.Created(res.Value);
+            return ApiResult<List<ResponseCategory>>.Ok(res.Value);
         }
         
     }

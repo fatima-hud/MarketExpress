@@ -1,25 +1,20 @@
-﻿using MarketExpress.Core.Results;
-using MarketExpress.Api.Bases;
+﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstacts;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Identity;
-using MarketExpress.Application.Abstracts;
-using Microsoft.AspNetCore.Http.HttpResults;
-using MarketExpress.Application.Dto.Register.Request;
 using MarketExpress.Application.Dto.Authontication.Request;
-using MarketExpress.Application.Dto.LogIn.Request;
-using MarketExpress.Application.Dto.Request;
-using MarketExpress.Application.Dto.LogIn.Response;
 using MarketExpress.Application.Dto.Authontication.Response;
+using MarketExpress.Application.Dto.LogIn.Request;
+using MarketExpress.Application.Dto.LogIn.Response;
+using MarketExpress.Application.Dto.Register.Request;
+using MarketExpress.Application.Dto.Request;
+using MarketExpress.Application.Services.Auths;
+using MarketExpress.Application.Services.Emails;
+using MarketExpress.Application.Services.Images;
+using MarketExpress.Application.Services.OtpCodes;
 using MarketExpress.Core.Entity.Identity;
-using MarketExpress.Application.Dto.Response;
-using MarketExpress.Application.Implementations;
-using MarketExpress.Application.Dto;
+using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace MarketExpress.Controllers
@@ -34,7 +29,7 @@ namespace MarketExpress.Controllers
         private readonly IImageService _imageService;
         private readonly IOtpCodeService _otpCodeService;
 
-        public AuthController(IAuthService authService, UserManager<User> userManager ,IEmailService emailService,IImageService imageService,IOtpCodeService otpCodeService )
+        public AuthController(IAuthService authService, UserManager<User> userManager, IEmailService emailService, IImageService imageService, IOtpCodeService otpCodeService)
         {
             _authService = authService;
             _userManager = userManager;
@@ -45,7 +40,7 @@ namespace MarketExpress.Controllers
         }
 
         [HttpPost("Register")]
-        public async Task<ApiResult> Register([FromBody]AddUserRequest request)
+        public async Task<ApiResult> Register([FromBody] AddUserRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -58,14 +53,14 @@ namespace MarketExpress.Controllers
             {
                 return this.ToApiResult(addNewUser);
             }
-            
+
             return ApiResult.Created();
 
 
         }
 
         [HttpPost("Login")]
-        public async Task<ApiResult<LogInResponse>> Login([FromBody]LoginRequest dto)
+        public async Task<ApiResult<LogInResponse>> Login([FromBody] LoginRequest dto)
         {
             if (!ModelState.IsValid)
             {
@@ -78,17 +73,17 @@ namespace MarketExpress.Controllers
             {
                 return this.ToApiResult(log);
             }
-            
+
             return this.ToApiResult(log);
 
 
 
 
         }
-       
+
 
         [HttpPost("ConfirmEmail")]
-        public async Task<ApiResult> ConfirmEmail([FromBody]ConfirmEmailRequest request)
+        public async Task<ApiResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
         {
 
             if (!ModelState.IsValid)
@@ -102,10 +97,10 @@ namespace MarketExpress.Controllers
                 return ApiResult.Ok("Email confirmed successfully!");
             else
                 return this.ToApiResult(result);
-                
+
         }
         [HttpPost("ResendOtpCode")]
-        public async Task<ApiResult> ResendOtpCode([FromBody]ResendOtpRequest request)
+        public async Task<ApiResult> ResendOtpCode([FromBody] ResendOtpRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -113,8 +108,8 @@ namespace MarketExpress.Controllers
                 return ApiResult.BadRequest(errors);
 
             }
-            var result=await _otpCodeService.ResendOtpCodeAsync(request);
-           
+            var result = await _otpCodeService.ResendOtpCodeAsync(request);
+
             if (result.IsSuccess)
                 return ApiResult.Ok("successfully!");
             else
@@ -123,14 +118,14 @@ namespace MarketExpress.Controllers
         }
 
 
-     
+
 
 
         [HttpPost("RefreshToken")]
         public async Task<ApiResult<AuthResponse>> RefreshToken([FromBody] RefreshAccessTokenRequest request)
-              
-            
-            {
+
+
+        {
             if (!ModelState.IsValid)
             {
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
@@ -138,9 +133,9 @@ namespace MarketExpress.Controllers
 
             }
             var result = await _authService.RefreshAccessTokenAsync(request);
-  
-            
-             
+
+
+
             if (!result.IsSuccess)
             {
                 return this.ToApiResult(Result<AuthResponse>.Failure(result.Message, result.Errors, result.FailureType));
@@ -153,7 +148,7 @@ namespace MarketExpress.Controllers
             };
             return ApiResult<AuthResponse>.Ok(response);
         }
-     
+
 
         [HttpPost("logout")]
         [Authorize]
@@ -166,15 +161,15 @@ namespace MarketExpress.Controllers
 
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
+            if (string.IsNullOrEmpty(userId))
             {
                 return ApiResult.Unauthorized();
             }
-            var result = await _authService.LogoutAsync(userId,request);
+            var result = await _authService.LogoutAsync(userId, request);
             return this.ToApiResult(result);
         }
 
-      
+
         [HttpPost("ForgotPassword")]
         public async Task<ApiResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {

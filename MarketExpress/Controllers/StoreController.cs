@@ -1,13 +1,14 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Comment.Response;
 using MarketExpress.Application.Dto.Product.Response;
 using MarketExpress.Application.Dto.Store.Request;
 using MarketExpress.Application.Dto.Store.Response;
+using MarketExpress.Application.Services.Stores;
 using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -95,15 +96,54 @@ namespace MarketExpress.Controllers
 
 
         }
+        [HttpGet]
+        [Authorize]
+        public async Task<ApiResult<List<ResponseStoreDto>>> GetNearestStores(decimal Latitude, decimal Longitude)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponseStoreDto>>.BadRequest(errors);
+
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<List<ResponseStoreDto>>.Unauthorized();
+            }
+            var res = await _storeService.GetNearestStores(userId, Latitude, Longitude);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseStoreDto>>.Ok(res.Value);
+
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpPut]
+        public async Task<ApiResult<ResponseGetStoreImagesDto>>UpdateStoreImages([FromForm]RequestUpdateStoreImagesDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseGetStoreImagesDto>.BadRequest(errors);
+
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<ResponseGetStoreImagesDto>.Unauthorized();
+            }
+            var res = await _storeService.UpdateStoreImagesAsync(userId, request);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<ResponseGetStoreImagesDto>.Ok(res.Value);
+        }
 
 
 
-
-
-
-
-
-
+    } 
     }
-}
 

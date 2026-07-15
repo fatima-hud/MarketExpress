@@ -15,6 +15,8 @@ namespace MarketExpress.Infrastructure.Configurations
         {
            
             builder.Property(o => o.TotalPrice).HasPrecision(18, 2);
+             builder.Property(e => e.Status).HasConversion<string>();
+
         }
     }
 }

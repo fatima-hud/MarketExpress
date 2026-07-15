@@ -1,8 +1,8 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Payment.Response;
 using MarketExpress.Application.Dto.Response;
+using MarketExpress.Application.Services.Payments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

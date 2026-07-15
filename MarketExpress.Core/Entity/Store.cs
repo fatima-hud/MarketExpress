@@ -45,6 +45,10 @@ namespace MarketExpress.Core.Entity
         public ICollection<Notification> Notifications { get; set; }
         public ICollection<Document> StoreDocuments { get; set; }
         public ICollection<StoreCategory> StoreCategories {  get; set; }
+        public ICollection<StoreFollower> StoreFollowers { get; set; }
+        public ICollection<Post> Posts { get; set; }
+        public string? SocialMediaManagerUserId { get; set; }
+        public User? SocialMediaManager { get; set; }
 
 
 

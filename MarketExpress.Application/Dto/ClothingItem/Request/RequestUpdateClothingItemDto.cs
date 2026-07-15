@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Core.Enums;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +10,10 @@ namespace MarketExpress.Application.Dto.ClothingItem.Request
 {
    public  class RequestUpdateClothingItemDto
     {
-        public enSize? Size {  get; set; }
+      
         public string? Color { get; set; }
-        public int? Quantity { get; set; }
+        public IFormFile ?Image { get; set; }
+     
        
     }
 }

@@ -1,18 +1,15 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto;
-using MarketExpress.Application.Dto.Comment.Response;
 using MarketExpress.Application.Dto.RequestStore.Request;
 using MarketExpress.Application.Dto.RequestStore.Response;
 using MarketExpress.Application.Dto.StoreCategory.Response;
-using MarketExpress.Application.Implementations;
+using MarketExpress.Application.Services.StoreCategories;
+using MarketExpress.Application.Services.SuperAdmins;
 using MarketExpress.Core.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Security.Claims;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MarketExpress.Controllers
 {
@@ -31,7 +28,7 @@ namespace MarketExpress.Controllers
             _superAdminService = superAdminService;
             _storeCategoryService = storeCategoryService;
         }
-        /*
+
         [Authorize(Roles = "SuperAdmin")]
         [HttpPost("{userId}")]
         public async Task<ApiResult<bool>> RevokeToken(string userId)
@@ -39,7 +36,9 @@ namespace MarketExpress.Controllers
 
             if (!ModelState.IsValid)
             {
-                return ApiResult<bool>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<bool>.BadRequest(errors);
+
             }
             var result = await _superAdminService.RevokeTokenAsync(userId);
             if (!result.IsSuccess)
@@ -75,32 +74,38 @@ namespace MarketExpress.Controllers
         }
         [Authorize(Roles = "SuperAdmin")]
         [HttpPost]
-         public async Task<ApiResult> AddRole(AddRoleDto dto)
+        public async Task<ApiResult> AddRole(AddRoleDto dto)
         {
             if (!ModelState.IsValid)
             {
-                  var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
                 return ApiResult.BadRequest(errors);
             }
-             var SadminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-             if (string.IsNullOrEmpty(SadminId))
-             {
-                 return ApiResult.Unauthorized();
-             }
+            var SadminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(SadminId))
+            {
+                return ApiResult.Unauthorized();
+            }
 
-             var res = await _superAdminService.AddRoleAsync(SadminId, dto);
-             if (!res.IsSuccess)
-             {
-                 return this.ToApiResult(res);
-             }
-             return ApiResult.Created();
+            var res = await _superAdminService.AddRoleAsync(SadminId, dto);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult.Created();
 
-         }
-        
+        }
+
         [Authorize(Roles = "SuperAdmin")]
         [HttpPatch("{requestId}")]
         public async Task<ApiResult<ResponseApprovedStoreRequestDto>> RequestApproved(int requestId)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseApprovedStoreRequestDto>.BadRequest(errors);
+
+            }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
@@ -118,6 +123,12 @@ namespace MarketExpress.Controllers
         [HttpPatch]
         public async Task<ApiResult<ResponseRejectedStoreRequestDto>> RequestRejected([FromBody] RequestRejectdDto request)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<ResponseRejectedStoreRequestDto>.BadRequest(errors);
+
+            }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
@@ -133,14 +144,21 @@ namespace MarketExpress.Controllers
         }
         [Authorize(Roles = "SuperAdmin")]
         [HttpGet]
-        public async Task<ApiResult<List<ResponsePendingStoreDto>>> GetAllRequestStoreByFilter([FromQuery]enStoreStatus storeStatus,int pageNumber,int pageSize)
+        public async Task<ApiResult<List<ResponsePendingStoreDto>>> GetAllRequestStoreByFilter([FromQuery] enStoreStatus storeStatus, int pageNumber, int pageSize)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponsePendingStoreDto>>.BadRequest(errors);
+
+            }
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
                 return ApiResult<List<ResponsePendingStoreDto>>.Unauthorized();
             }
-            var res=await _superAdminService.GetAllRequestStoreByFilter(storeStatus,pageNumber,pageSize);
+            var res = await _superAdminService.GetAllRequestStoreByFilter(storeStatus, pageNumber, pageSize);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
@@ -151,7 +169,10 @@ namespace MarketExpress.Controllers
 
 
 
-        */
+
+
+
+
 
     }
 }

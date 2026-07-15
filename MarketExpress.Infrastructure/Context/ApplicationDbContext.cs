@@ -72,7 +72,7 @@ namespace MarketExpress.Database
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> Orderitems { get; set; }
 
-        public DbSet<ClothingItem> Clothingitems { get; set; }
+        public DbSet<ProductColor> ProductColors { get; set; }
 
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
 
@@ -90,7 +90,11 @@ namespace MarketExpress.Database
         public DbSet<Wallet> Wallets { get; set; }
         public DbSet<TransactionProcess> Transactions { get; set; }
         public DbSet<Payment> Payments { get; set; }
-
-
+        public DbSet<ProductSize> ProductSizes { get; set; }
+        public DbSet<Post> Posts { get; set; }
+        public DbSet<PostMedia> PostMedias { get; set; }
+        public DbSet<PostReaction> PostReactions { get; set; }
+        public DbSet<StoreFollower> StoreFollowers { get; set; }
     }
+           
 }

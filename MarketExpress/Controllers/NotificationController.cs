@@ -1,8 +1,9 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Notification.Request;
 using MarketExpress.Application.Dto.Notification.Response;
+using MarketExpress.Application.Services.Notifications;
+using MarketExpress.Application.Services.UserNotifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

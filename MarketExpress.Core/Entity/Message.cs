@@ -15,9 +15,9 @@ namespace MarketExpress.Core.Entity
         public string MessageText { get; set; }
         public DateTime SentAt { get; set; }
         public bool IsRead { get; set; }
-
-
-
+      
+        public DateTime? UpdatedAt {  get; set; }
+        public bool IsEdited { get; set; }
         public Complaint Complaint { get; set; }
         public User Sender { get; set; }
     }

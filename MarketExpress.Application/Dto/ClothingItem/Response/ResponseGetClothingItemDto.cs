@@ -1,4 +1,6 @@
-﻿using MarketExpress.Core.Enums;
+﻿using MarketExpress.Application.Dto.ProductSize.Response;
+using MarketExpress.Core.DtoHelping.ClothingItem.Response;
+using MarketExpress.Core.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +14,9 @@ namespace MarketExpress.Application.Dto.ClothingItem.Response
         public int Id { get; set; }
      
         public string Color { get; set; }
-        public enSize Size { get; set; }
-        public int Quantity { get; set; }
-
-        public bool IsFoundProduct { get; set; }
+        public string Image {  get; set; }
+        
+      
+        public List<ResponseGetAllSizeDto> ProductSizes { get; set; }
     }
 }

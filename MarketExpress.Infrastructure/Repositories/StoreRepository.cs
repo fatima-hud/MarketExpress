@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Core.Entity;
+using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Enums;
 using MarketExpress.Database;
 using MarketExpress.Infrastructure.Abstacts;
@@ -101,6 +102,48 @@ namespace MarketExpress.Infrastructure.Repositories
            
             var res = await _dbContext.Wallets.FirstOrDefaultAsync(e => e.UserId == store.OwnerId);
             return res;
+        }
+
+        public async Task<List<Store>> GetNearestStoreByUserIdAsync(decimal Latitude,decimal Longitude)
+        {
+
+              var stores = await _dbContext.Stores
+        .Where(s => s.IsActive && !s.IsDeleted)
+        .ToListAsync();
+
+            return stores
+                .OrderBy(s => GetDistance(
+                    (double)Latitude,
+                    (double)Longitude,
+                    (double)s.Latitude,
+                    (double)s.Longitude)).Take(10)
+                .ToList();
+        }
+        private double GetDistance(
+    double userLat,
+    double userLon,
+    double storeLat,
+    double storeLon)
+        {
+            const double R = 6371; // نصف قطر الأرض بالكيلومتر
+
+            var dLat = DegreesToRadians(storeLat - userLat);
+            var dLon = DegreesToRadians(storeLon - userLon);
+
+            var a =
+                Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(DegreesToRadians(userLat)) *
+                Math.Cos(DegreesToRadians(storeLat)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return R * c;
+        }
+
+        private double DegreesToRadians(double degrees)
+        {
+            return degrees * Math.PI / 180;
         }
     }
 }

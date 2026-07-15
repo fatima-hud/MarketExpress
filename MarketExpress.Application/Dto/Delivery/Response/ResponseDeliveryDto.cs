@@ -17,6 +17,6 @@ namespace MarketExpress.Application.Dto.Delivery.Response
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public string AddressLocation{ get; set; }
-        public enDeliveryStatue Status { get; set; }  
+        public enDeliveryStatus Status { get; set; }  
     }
 }

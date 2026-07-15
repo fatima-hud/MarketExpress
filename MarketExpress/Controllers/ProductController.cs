@@ -1,9 +1,12 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Product.Request;
 using MarketExpress.Application.Dto.Product.Response;
 using MarketExpress.Application.Dto.Request;
+using MarketExpress.Application.Services.Categories;
+using MarketExpress.Application.Services.Images;
+using MarketExpress.Application.Services.Products;
+using MarketExpress.Core.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -125,7 +128,7 @@ namespace MarketExpress.Controllers
             }
             return ApiResult.Ok();
         }
-        [HttpGet("{productId}")]
+     /*   [HttpGet("{productId}")]
         public async Task<ApiResult<ResponseProductDetailsDto>> GetProduct(int productId)
         {
             if (!ModelState.IsValid)
@@ -139,8 +142,73 @@ namespace MarketExpress.Controllers
                 return this.ToApiResult(res);
             }
             return ApiResult<ResponseProductDetailsDto>.Ok(res.Value);
+        }*/
+        [HttpGet]
+        public async Task<ApiResult<List<ResponseGetDiscountProductDto>>> GetAllDiscountProduct()
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
+
+            }
+           
+
+            var res = await _productService.GetAllDiscountProductByAllStores();
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
+        }
+        [HttpGet("{query}")]
+        public async Task<ApiResult<List<ResponseGetDiscountProductDto>>> GetSearch(string query)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
+
+            }
+
+
+            var res = await _productService.SearchAsync(query);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
+        }
+        [HttpGet]
+        public async Task<ApiResult<List<ResponseGetDiscountProductDto>>> GetFilter(decimal? minPrice,decimal ?maxPrice,enType? type,string? color,enSize? size)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
+
+            }
+            var request = new FilterDto
+            {
+                Color = color,
+                Size = size,
+                Type = type,
+                maxPrice = maxPrice,
+                minPrice = minPrice
+            };
+
+            var res = await _productService.FilterAsync(request);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
         }
 
+
+
+
     }
+
 
 }

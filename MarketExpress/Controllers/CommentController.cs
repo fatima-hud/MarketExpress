@@ -1,9 +1,9 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Comment.Request;
 using MarketExpress.Application.Dto.Comment.Response;
 using MarketExpress.Application.Dto.Response;
+using MarketExpress.Application.Services.Comments;
 using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

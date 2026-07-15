@@ -19,6 +19,7 @@ namespace MarketExpress.Application.Dto.Order.Response
         public string Color {  get; set; }
         public string ColorHex { get; set; }
         public decimal Price { get; set; }
+        public string Image {  get; set; }
       
         
         

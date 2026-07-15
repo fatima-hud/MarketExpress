@@ -1,9 +1,9 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.CartItem.Response;
 using MarketExpress.Application.Dto.StoreCategory.Request;
 using MarketExpress.Application.Dto.StoreCategory.Response;
+using MarketExpress.Application.Services.StoreCategories;
 using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -62,29 +62,7 @@ namespace MarketExpress.Controllers
             }
             return ApiResult<List<ResponseGetStoreCategoryDto>>.Ok(res.Value);
         }
-        [Authorize(Roles = "SuperAdmin")]
-        [HttpGet("{storeId}")]
-        public async Task<ApiResult<List<ResponseGetStoreCategoryDto>>> GetAllStoreCategoryAsync(int storeId)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<List<ResponseGetStoreCategoryDto>>.BadRequest(errors);
-            }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return ApiResult<List<ResponseGetStoreCategoryDto>>.Unauthorized();
-            }
-            var res = await _storeCategoryService.GetAllStoreCategoryAsync(storeId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<List<ResponseGetStoreCategoryDto>>.Ok(res.Value);
-
-
-        }
+      
         [Authorize(Roles = "SuperAdmin,Admin")]
         [HttpDelete("{storeCategoryId}")]
         public async Task<ApiResult> DeleteAsync( int storeCategoryId)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MarketExpress.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace MarketExpress.Application.Dto.Complaint.Response
 {
    public class ResponseGetComplaintDto
     {
-        public int Id { get; set; }
+        public int ComplaintId { get; set; }
         public string CustomerId { get; set; }
         public string CustomerFullName { get; set; }
         public string CustomerImageUrl { get; set; }
@@ -19,6 +20,7 @@ namespace MarketExpress.Application.Dto.Complaint.Response
         public string Title { get; set; }
         public string Description { get; set; }
         public DateTime CreatedAt { get; set; }
+        public enComplaintStatus Status { get; set; }
     }
 }
 

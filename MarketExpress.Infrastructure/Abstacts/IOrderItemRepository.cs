@@ -1,4 +1,5 @@
-﻿using MarketExpress.Core.Entity;
+﻿using MarketExpress.Core.DtoHelping.ProductInventory;
+using MarketExpress.Core.Entity;
 using MarketExpress.Infrastructure.InfrastructureBases;
 using System;
 using System.Collections.Generic;
@@ -12,5 +13,6 @@ namespace MarketExpress.Infrastructure.Abstacts
     {
         Task<List<OrderItem>> GetOrderItemsAsync(int orderId);
         Task<List<IGrouping<int, OrderItem>>> GroupingItemsForStoresAsync(int orderId);
+        Task<List<ResponseProductInventoryDto>> GetProductInventoryAsync(int storeId, DateTime startDate, DateTime endDate);
     }
 }

@@ -1,8 +1,8 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Transaction.Request;
 using MarketExpress.Application.Dto.Transaction.Response;
+using MarketExpress.Application.Services.Transactions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

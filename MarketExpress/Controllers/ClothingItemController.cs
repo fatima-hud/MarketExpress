@@ -1,9 +1,13 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.ClothingItem.Request;
 using MarketExpress.Application.Dto.ClothingItem.Response;
+using MarketExpress.Application.Dto.ProductColor.Response;
+using MarketExpress.Application.Dto.ProductSize.Request;
+using MarketExpress.Application.Dto.ProductSize.Response;
 using MarketExpress.Application.Dto.Response;
+using MarketExpress.Application.Services.ProductColors;
+using MarketExpress.Application.Services.ProductSizes;
 using MarketExpress.Core.DtoHelping.ClothingItem.Response;
 using MarketExpress.Core.Enums;
 using MarketExpress.Core.Results;
@@ -19,18 +23,21 @@ namespace MarketExpress.Controllers
     [ApiController]
     public class ClothingItemController : ControllerBase
     {
-        private readonly IClothingItemService _clothingItemService;
+        private readonly IProductColorService _productColorService;
+        private readonly IProductSizeService _productSizeService;
 
-        public ClothingItemController(IClothingItemService clothingItemService)
+        public ClothingItemController(IProductColorService clothingItemService,IProductSizeService productSizeService)
         {
-            _clothingItemService = clothingItemService;
+            _productColorService = clothingItemService;
+            _productSizeService = productSizeService;
         }
 
         [Authorize(Roles = "Admin")]
 
         [HttpPost]
-        public async Task<ApiResult<ResponseClothingItemDto>> AddDetailsforProduct(int productId, RequestAddClothingItemDto request)
+        public async Task<ApiResult<ResponseClothingItemDto>> AddColorforProduct(int productId, [FromForm] RequestAddClothingItemDto request)
         {
+         
             if (!ModelState.IsValid)
             {
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
@@ -42,12 +49,37 @@ namespace MarketExpress.Controllers
                 return ApiResult<ResponseClothingItemDto>.Unauthorized();
             }
 
-            var res = await _clothingItemService.AddAsync(userId, productId,request);
+            var res = await _productColorService.AddAsync(userId, productId,request);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
             return ApiResult<ResponseClothingItemDto>.Created(res.Value);
+        }
+
+        [Authorize(Roles = "Admin")]
+
+        [HttpPost]
+        public async Task<ApiResult<List<ResponseGetProductSizeDto>>> AddSizesforProduct(int productColorId, List<RequestProductSizeDto> request)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<List<ResponseGetProductSizeDto>>.BadRequest(errors);
+            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<List<ResponseGetProductSizeDto>>.Unauthorized();
+            }
+
+            var res = await _productSizeService.AddAsync(userId, productColorId, request);
+            if (!res.IsSuccess)
+            {
+                return this.ToApiResult(res);
+            }
+            return ApiResult<List<ResponseGetProductSizeDto>>.Created(res.Value);
         }
         [Authorize(Roles = "Admin")]
         [HttpPut]
@@ -64,7 +96,7 @@ namespace MarketExpress.Controllers
             {
                 return ApiResult<ResponseClothingItemDto>.Unauthorized();
             }
-            var res = await _clothingItemService.UpdateAsync(userId, clothingItemId, dto);
+            var res = await _productColorService.UpdateAsync(userId, clothingItemId, dto);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
@@ -82,7 +114,7 @@ namespace MarketExpress.Controllers
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
                 return ApiResult< List < ResponseGetClothingItemDto >>.BadRequest(errors);
             }
-            var res = await _clothingItemService.GetAllClothingItemByProduct(productId);
+            var res = await _productColorService.GetAllClothingItemByProduct(productId);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
@@ -90,19 +122,19 @@ namespace MarketExpress.Controllers
             return ApiResult< List<ResponseGetClothingItemDto >>.Ok(res.Value);
         }
         [HttpGet("{clothingItemId}")]
-        public async Task<ApiResult<ResponseGetClothingItemDto>>GetAsync(int clothingItemId)
+        public async Task<ApiResult<ResponseGetProductColorDto>>GetAsync(int clothingItemId)
         {
             if (!ModelState.IsValid)
             {
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetClothingItemDto>.BadRequest(errors);
+                return ApiResult<ResponseGetProductColorDto>.BadRequest(errors);
             }
-            var res = await _clothingItemService.GetClothingItemByProduct(clothingItemId);
+            var res = await _productColorService.GetProductColorById(clothingItemId);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult<ResponseGetClothingItemDto>.Ok(res.Value);
+            return ApiResult<ResponseGetProductColorDto>.Ok(res.Value);
         }
         [HttpGet]
         public async Task<ApiResult<List<ResponseGetAllSizeDto>>> GetAllSizeByProductColorAsync(int productId, string color)
@@ -112,7 +144,7 @@ namespace MarketExpress.Controllers
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
                 return ApiResult< List<ResponseGetAllSizeDto>>.BadRequest(errors);
             }
-            var res = await _clothingItemService.GetAllSizeByProductColorAsync(productId, color);
+            var res = await _productColorService.GetAllSizeByProductColorAsync(productId, color);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
@@ -120,39 +152,50 @@ namespace MarketExpress.Controllers
             return ApiResult<List<ResponseGetAllSizeDto>>.Ok(res.Value);
 
         }
-        [HttpGet]
-        public async Task<ApiResult<List<ResponseGetAllColorDto>>> GetAllColorByProductSizeAsync(int productId, enSize size)
+    
+
+       
+
+           [Authorize(Roles = "Admin")]
+        [HttpPut]
+        public async Task<ApiResult<ResponseGetProductSizeDto>> UpdateSizeforProduct( int productSizeId, RequestUpdateProductSizeDto request)
         {
             if (!ModelState.IsValid)
             {
                 var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<List<ResponseGetAllColorDto>>.BadRequest(errors);
+                return ApiResult<ResponseGetProductSizeDto>.BadRequest(errors);
+
             }
-            var res = await _clothingItemService.GetAllColorByProductSizeAsync(productId, size);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResult<ResponseGetProductSizeDto>.Unauthorized();
+            }
+            var res = await _productSizeService.UpdateQuantityAsync(userId, productSizeId,request);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
-            return ApiResult<List<ResponseGetAllColorDto>>.Ok(res.Value);
+            return ApiResult<ResponseGetProductSizeDto>.Ok(res.Value);
         }
 
-
-
-        /*
-        [HttpPost("GetSuggestByProductId")]
-        public async Task<ApiResult<List<ResponseSuggestProductDto>>> GetSuggestByProductId(RequestSuggestProductDto request)
+        
+        [HttpPost]
+        public async Task<ApiResult<List<ResponseSuggestProductDto>>> GetSuggestByProductId([FromQuery]RequestSuggestProductDto request)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<List<ResponseSuggestProductDto>>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult< List<ResponseSuggestProductDto>>.BadRequest(errors);
+
             }
-            var res = await _clothingItemService.GetClothingItemsByProductIdAsync(request);
+            var res = await _productColorService.GetAllSuggestClothingItemsByProductIdAsync(request);
             if (!res.IsSuccess)
             {
                 return this.ToApiResult(res);
             }
             return ApiResult<List<ResponseSuggestProductDto>>.Ok(res.Value);
 
-        }*/
+        }
     }
 }

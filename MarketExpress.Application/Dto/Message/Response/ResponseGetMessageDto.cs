@@ -14,5 +14,8 @@ namespace MarketExpress.Application.Dto.Message.Response
         public string? SenderImageUrl { get; set; }
         public string MessageText { get; set; }
         public DateTime SentAt { get; set; }
+        public bool IsRead {  get; set; }
+        public bool IsEdited {  get; set; }
+        public DateTime? UpdatedAt {  get; set; }
     }
 }

@@ -10,7 +10,7 @@ namespace MarketExpress.Application.Dto.ClothingItem.Request
   public  class RequestSuggestProductDto
     {
         public int ProductId { get; set; }
-        public string Color { get; set; }
-        public enSize Size { get; set; }
+      
+      
     }
 }

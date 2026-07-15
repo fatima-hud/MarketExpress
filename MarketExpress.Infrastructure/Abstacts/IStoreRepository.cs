@@ -24,6 +24,7 @@ namespace MarketExpress.Infrastructure.Abstacts
      Task<bool>IsPhoneNumberExistAsync(string phoneNumber);
         Task<bool> IsEmailExistAsync(string email);
         Task<Wallet?> GetWalletByStoreIdAsync(int storeId);
+        Task<List<Store>>GetNearestStoreByUserIdAsync(decimal Latitude,decimal Longitude);
 
 
 

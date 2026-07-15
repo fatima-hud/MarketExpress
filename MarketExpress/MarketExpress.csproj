@@ -39,7 +39,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\chat.html" />
     <None Include="wwwroot\uploads\002ae622-f3a5-4790-b057-f19e9b6cf9a2 - Copy.jpg" />
     <None Include="wwwroot\uploads\002ae622-f3a5-4790-b057-f19e9b6cf9a2.jpg" />
     <None Include="wwwroot\uploads\037c9dee-bd9f-49ba-818f-442f917cf2b2 - Copy.png" />
@@ -212,7 +211,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
     <PackageReference Include="Firebase.DotNet.Storage" Version="1.0.3" />
-    <PackageReference Include="MailKit" Version="4.16.0" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.10" />

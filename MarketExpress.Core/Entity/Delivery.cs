@@ -15,7 +15,7 @@ namespace MarketExpress.Core.Entity
         public int OrderId { get; set; }
         public DateTime StartTime{ get; set; }
         public DateTime? EndTime{ get; set; }
-        public enDeliveryStatue statue { get; set; }
+        public enDeliveryStatus statue { get; set; }
         public string AddressLocation { get; set; }
         public User Driver { get; set; }
         public Order Order { get; set; }

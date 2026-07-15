@@ -23,15 +23,16 @@ namespace MarketExpress.Infrastructure.Repositories
             return ret;
         }
 
-        public async Task<List<Message>> GetAllMessageUnReadAsync(string userId, int complaintId)
+        public async Task<int> MarkAsReadAsync(string userId, int complaintId)
         {
-            var res=await _dbContext.Messages.Where(e=>e.ComplaintId == complaintId && e.SenderId != userId && !e.IsRead).ToListAsync();
+            var res=await _dbContext.Messages.Where(e=>e.ComplaintId == complaintId && e.SenderId != userId && !e.IsRead).ExecuteUpdateAsync(s =>
+            s.SetProperty(x => x.IsRead, true));
             return res;
         }
 
-        public async Task<List<Message>>?GetAllMessageByComplaintIdAsync(int complaintId)
+        public async Task<List<Message>>GetAllMessageByComplaintIdAsync(int complaintId)
         {
-            var res = await _dbContext.Messages.Include(e=>e.Sender).Where(e => e.ComplaintId == complaintId).ToListAsync();
+            var res = await _dbContext.Messages.AsNoTracking().Include(e=>e.Sender).Where(e => e.ComplaintId == complaintId).OrderBy(m => m.SentAt).ToListAsync();
             return res;
         }
     }

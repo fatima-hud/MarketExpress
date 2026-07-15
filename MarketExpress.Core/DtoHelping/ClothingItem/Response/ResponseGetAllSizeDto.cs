@@ -9,7 +9,8 @@ namespace MarketExpress.Core.DtoHelping.ClothingItem.Response
 {
    public class ResponseGetAllSizeDto
     {
-        public enSize size { get; set; }
+        public int ProductSizeId { get; set; }
+        public enSize Size { get; set; }
         public bool IsFoundProduct { get; set; }
     }
 }

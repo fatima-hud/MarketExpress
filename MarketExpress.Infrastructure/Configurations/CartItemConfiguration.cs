@@ -13,7 +13,7 @@ namespace MarketExpress.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<CartItem> builder)
         {
-            builder.Property(e => e.Size).HasConversion<string>();
+          
 
           
             builder
@@ -21,6 +21,11 @@ namespace MarketExpress.Infrastructure.Configurations
     .WithMany(x => x.CartItems)
     .HasForeignKey(x => x.CartId)
     .OnDelete(DeleteBehavior.Cascade);
+            builder
+ .HasOne(x => x.ProductSize)
+ .WithMany(x=>x.CartItems)
+ .HasForeignKey(x => x.ProductSizeId)
+ .OnDelete(DeleteBehavior.NoAction);
 
         }
     }

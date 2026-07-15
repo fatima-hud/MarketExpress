@@ -1,9 +1,11 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
 using MarketExpress.Application.Dto.Checkout.Response;
 using MarketExpress.Application.Dto.Order.Request;
 using MarketExpress.Application.Dto.Order.Response;
+using MarketExpress.Application.Services.Checkouts;
+using MarketExpress.Application.Services.OrderItems;
+using MarketExpress.Application.Services.Orders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

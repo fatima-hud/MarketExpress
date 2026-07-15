@@ -1,8 +1,9 @@
 ﻿using MarketExpress.Api.Bases;
 using MarketExpress.Api.Extention;
-using MarketExpress.Application.Abstracts;
+using MarketExpress.Application.Dto.Complaint.Response;
 using MarketExpress.Application.Dto.Message.Request;
 using MarketExpress.Application.Dto.Message.Response;
+using MarketExpress.Application.Services.Messages;
 using MarketExpress.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ using System.Security.Claims;
 
 namespace MarketExpress.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class MessageController : ControllerBase
     {
@@ -104,35 +105,31 @@ namespace MarketExpress.Controllers
             return ApiResult<ResponseUpdateMessageDto>.Ok(result.Value);
 
 
-        }
+        }*/
         [Authorize(Roles = "Admin,User")]
-        [HttpPut("ReadMessage")]
-        public async Task<ApiResult<List<ResponseUpdateMessageDto>>> ReadMessage(RequestUpdateReadMessageDto request)
+        [HttpPut]
+        public async Task<ApiResult<int>> ReadMessage(RequestUpdateReadMessageDto request)
         {
             if (!ModelState.IsValid)
             {
-                return ApiResult<List<ResponseUpdateMessageDto>>.BadRequest(ModelState.ToString());
+                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ApiResult<int>.BadRequest(errors);
+
             }
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
             {
-                return ApiResult<List<ResponseUpdateMessageDto>>.Unauthorized();
+                return ApiResult<int>.Unauthorized();
             }
-            var result = await _messageService.UpdateReadMessageAsync(userId, request);
-            if (!result.IsSuccess)
-                return this.ToApiResult(result);
+            var res = await _messageService.UpdateReadMessageAsync(userId, request);
+            if (!res.IsSuccess)
+                return this.ToApiResult(res);
+           
             await _hubContext.Clients.Group(request.ComplaintId.ToString())
-            .SendAsync("MessageReadStatusChanged", new
-            {
-                complaintId = request.ComplaintId,
-                messages = result.Value
-            }
-                );
-            await _hubContext.Clients.Group(request.ComplaintId.ToString())
-              .SendAsync("ReceiveMessage", userId, result.Value);
+              .SendAsync("ReceiveMessage", userId, res.Value);
 
 
-            return ApiResult<List<ResponseUpdateMessageDto>>.Ok(result.Value);
+            return ApiResult<int>.Ok(res.Value);
 
 
 
@@ -151,6 +148,6 @@ namespace MarketExpress.Controllers
                 return this.ToApiResult(result);
             return ApiResult<List<ResponseGetMessageDto>>.Ok(result.Value);
 
-        }*/
+        }
     }
 }

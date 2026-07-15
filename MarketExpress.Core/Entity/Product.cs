@@ -48,9 +48,9 @@ namespace MarketExpress.Core.Entity
 
 
        
-        public ICollection<CartItem> CartItems{ get; set; }
+       
         public ICollection<OrderItem> OrderItems{ get; set; }
-        public ICollection<ClothingItem> ClothingItems { get; set; }
+        public ICollection<ProductColor> ProductColors { get; set; }
         public ICollection<Rating> Ratings { get; set; }
         public ICollection<Comment> Comments { get; set; }
 

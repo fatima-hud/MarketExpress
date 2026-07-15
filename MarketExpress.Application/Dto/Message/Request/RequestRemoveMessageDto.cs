@@ -9,9 +9,10 @@ namespace MarketExpress.Application.Dto.Message.Request
 {
    public class RequestRemoveMessageDto
     {
-        [Required]
+     
         public int ComplaintId { get; set; }
-        [Required]
-        public int MessageId {  get; set; }
+     
+        public int MessageId { get; set; }
+      
     }
 }

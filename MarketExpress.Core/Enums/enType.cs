@@ -14,7 +14,8 @@ namespace MarketExpress.Core.Enums
         ShortPants=4,
         Shirt=5,
         T_shirt=6,
-        Shoes=7
+        Shoes=7,
+        SportSet = 8
 
     }
 }
