@@ -10,6 +10,6 @@ namespace MarketExpress.Infrastructure.Abstacts
 {
     public interface IPostRepository:IGenericRepositoryAsync<Post>
     {
-        Task<List<Post>> GetAllPostsByStoreAsync(int storeId);
+        Task<List<Post>> GetAllPostsByStoreAsync(string? userId, int storeId);
     }
 }

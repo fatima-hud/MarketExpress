@@ -1,6 +1,9 @@
 ﻿using MarketExpress.Application.Dto;
+using MarketExpress.Application.Dto.Order.Response;
 using MarketExpress.Application.Dto.RequestStore.Request;
 using MarketExpress.Application.Dto.RequestStore.Response;
+using MarketExpress.Application.Services.AesEncryption;
+using MarketExpress.Core.DtoHelping.Roles;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Enums;
 using MarketExpress.Core.Helping;
@@ -18,7 +21,11 @@ namespace MarketExpress.Application.Services.SuperAdmins
         private readonly IStoreRepository _storeRepository;
         private readonly IUserRepository _userRepository;
         private readonly IDocumentRepository _userDocumentRepository;
-        public SuperAdminService(UserManager<User> userManager, IRefreshTokenRepository refreshTokenRepository, RoleManager<IdentityRole> roleManager, IStoreRepository storeRepository, IUserRepository userRepository, IDocumentRepository userDocumentRepository)
+        private readonly IOrderRepository _orderRepository;
+        private readonly IAesEncryptionService _aesEncryptionService;
+        private readonly IRoleRepository _roleRepository;
+
+        public SuperAdminService(UserManager<User> userManager, IRefreshTokenRepository refreshTokenRepository, RoleManager<IdentityRole> roleManager, IStoreRepository storeRepository, IUserRepository userRepository, IDocumentRepository userDocumentRepository, IOrderRepository orderRepository, IAesEncryptionService aesEncryptionService, IRoleRepository roleRepository)
         {
             _userManager = userManager;
             _refreshTokenRepository = refreshTokenRepository;
@@ -26,6 +33,9 @@ namespace MarketExpress.Application.Services.SuperAdmins
             _storeRepository = storeRepository;
             _userRepository = userRepository;
             _userDocumentRepository = userDocumentRepository;
+            _orderRepository = orderRepository;
+            _aesEncryptionService = aesEncryptionService;
+            _roleRepository = roleRepository;
         }
         public async Task<Result<bool>> RevokeTokenAsync(string userId)
         {
@@ -33,7 +43,7 @@ namespace MarketExpress.Application.Services.SuperAdmins
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user is null)
+                if (user is null || user.IsDeleted)
                 {
                     return Result<bool>.NotFound("مسنخدم غير موجود");
                 }
@@ -41,13 +51,22 @@ namespace MarketExpress.Application.Services.SuperAdmins
                 {
                     return Result<bool>.BadRequest("مستخدم محظور");
                 }
+
                 user.IsBanned = true;
                 await _refreshTokenRepository.RevokeAllRefreshTokensAsync(userId);
                 var updateResult = await _userManager.UpdateAsync(user);
                 if (!updateResult.Succeeded)
                 {
+                    await trans.RollbackAsync();
                     return Result<bool>.Failure("فشل في حظر مستخدم");
                 }
+                var store = await _storeRepository.GetStoreByAdminAsync(userId);
+                if (store != null)
+                {
+                    store.IsActive = false;
+                    await _storeRepository.SaveChangesAsync();
+                }
+
                 await trans.CommitAsync();
                 return Result<bool>.Success(true, "تم حظر المستخدم وإلغاء جميع رموز التحديث");
             }
@@ -57,18 +76,49 @@ namespace MarketExpress.Application.Services.SuperAdmins
                 return Result<bool>.Failure("حدث خطا داخلي");
             }
         }
+        public async Task<Result<bool>> UnbanUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null || user.IsDeleted)
+                return Result<bool>.NotFound("مستخدم غير موجود");
+
+            if (!user.IsBanned)
+                return Result<bool>.BadRequest("المستخدم غير محظور");
+
+            user.IsBanned = false;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return Result<bool>.Failure("فشل في فك الحظر");
+
+            var store = await _storeRepository.GetUnActiveStoreByAdminAsync(userId);
+            if (store != null)
+            {
+                store.IsActive = true;
+                await _storeRepository.SaveChangesAsync();
+            }
+
+
+            return Result<bool>.Success(true, "تم فك الحظر بنجاح");
+        }
         public async Task<Result> AddRoleAsync(string SadminId, AddRoleDto dto)
         {
             var admin = await _userManager.FindByIdAsync(SadminId);
-            if (admin is null || !await _roleManager.RoleExistsAsync("SuperAdmin"))
+
+            if (admin is null || !await _userManager.IsInRoleAsync(admin, "SuperAdmin"))
             {
-                return Result.BadRequest(" ليس لديه صلاحيات مالك التطبيق");
+                return Result.BadRequest("ليس لديه صلاحيات مالك التطبيق");
             }
             var user = await _userManager.FindByIdAsync(dto.UserId);
-            if (user is null || !await _roleManager.RoleExistsAsync(dto.Role))
+
+            if (user is null || user.IsDeleted || !await _roleManager.RoleExistsAsync(dto.Role))
             {
                 return Result.NotFound("المستخدم او الدور غير موجود");
             }
+
+
             if (user.IsBanned)
             {
 
@@ -79,10 +129,25 @@ namespace MarketExpress.Application.Services.SuperAdmins
 
                 return Result.BadRequest("الايميل غير مؤكد");
             }
+            if (dto.Role != "EmployeeOfPayment")
+            {
+                return Result.BadRequest("غير مسموح سوى اضافة دور موظف دفع");
+            }
+
             if (await _userManager.IsInRoleAsync(user, dto.Role))
             {
                 return Result.BadRequest("المستخدم لديه الدور مسبقا");
             }
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("Admin"))
+            {
+                return Result.BadRequest("  لا يمكن اسناد دور موظف الدفع لصاحب متجر");
+            }
+            if (roles.Contains("SuperAdmin"))
+            {
+                return Result.BadRequest("لا يمكن اسناد دور موظف الدفع لسوبر ادمن");
+            }
+
             if (user.BirthDate < BirthDateSettings.minDate || user.BirthDate > BirthDateSettings.maxDate)
             {
 
@@ -92,15 +157,14 @@ namespace MarketExpress.Application.Services.SuperAdmins
             if (user.BirthDate.Date > DateTime.Today.AddYears(-age)) age--;
             if (age < 18)
             {
-
                 return Result.BadRequest("عمر المستخدم يجب ان يكون على الاقل 18 سنة");
             }
             var res = await _userManager.AddToRoleAsync(user, dto.Role);
             if (!res.Succeeded)
             {
-                return Result.BadRequest("حدث خطا داخلي");
+                return Result.BadRequest("لم يتم اضافة الدور");
             }
-            return Result.Success();
+            return Result.Success("تم اضافة الدور بنجاح");
         }
         public async Task<Result<ResponseApprovedStoreRequestDto>> ApprovedStoreRequestAsync(int requestId)
         {
@@ -175,8 +239,8 @@ namespace MarketExpress.Application.Services.SuperAdmins
                 CreatedAt = e.CreatedAt,
                 IsActive = e.IsActive,
                 Description = e.Description,
-                Latitude = e.Latitude,
-                Longitude = e.Longitude,
+                //     Latitude = e.Latitude,
+                //    Longitude = e.Longitude,
                 Logo = e.Logo,
                 FeaturedImage = e.FeaturedImage
             }).ToList();
@@ -245,12 +309,94 @@ namespace MarketExpress.Application.Services.SuperAdmins
                 CreatedAt = e.CreatedAt,
                 IsActive = e.IsActive,
                 Description = e.Description,
-                Latitude = e.Latitude,
-                Longitude = e.Longitude,
+
                 Logo = e.Logo,
                 FeaturedImage = e.FeaturedImage
             }).ToList();
             return Result<List<ResponsePendingStoreDto>>.Success(ret);
+        }
+
+        public async Task<Result<List<ResponseAddOrderDto>>> GetAllFilterOrders(enOrderStatus orderStatus, int pageNumber, int pageSize)
+        {
+            var res = await _orderRepository.GetAllFilterOrdersAsync(orderStatus, pageNumber, pageSize);
+            if (!res.Any())
+            {
+                return Result<List<ResponseAddOrderDto>>.Success(new List<ResponseAddOrderDto>());
+            }
+
+            var ret = res.Select(o => new ResponseAddOrderDto
+            {
+                Id = o.Id,
+                UserId = o.UserId,
+                CreatedAt = o.CreatedAt,
+                FullName = o.User.FullName,
+                Address = _aesEncryptionService.Decrypt(o.Address),
+                PhoneNumber = o.User.PhoneNumber,
+                Status = o.Status,
+                TotalPrice = o.TotalPrice
+
+            });
+            return Result<List<ResponseAddOrderDto>>.Success(ret.ToList());
+        }
+
+        public async Task<Result> RemoveRoleAsync(string SadminId, AddRoleDto dto)
+        {
+            var admin = await _userManager.FindByIdAsync(SadminId);
+
+            if (admin is null || !await _userManager.IsInRoleAsync(admin, "SuperAdmin"))
+            {
+                return Result.BadRequest("ليس لديه صلاحيات مالك التطبيق");
+            }
+            if (dto.Role == "SuperAdmin")
+            {
+                return Result.BadRequest("لا يمكن إزالة دور سوبر ادمن");
+            }
+
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+
+            if (user is null || user.IsDeleted || !await _roleManager.RoleExistsAsync(dto.Role))
+            {
+                return Result.NotFound("المستخدم أو الدور غير موجود");
+            }
+
+
+
+            var store = await _storeRepository.GetStoreByAdminAsync(dto.UserId);
+
+            if (store != null && dto.Role == "Admin")
+            {
+                return Result.BadRequest(" المستخدم لديه متجر، لا يمكن إلغاء دوره");
+            }
+
+            if (!await _userManager.IsInRoleAsync(user, dto.Role))
+            {
+                return Result.BadRequest("المستخدم لا يملك هذا الدور");
+            }
+
+            var res = await _userManager.RemoveFromRoleAsync(user, dto.Role);
+
+            if (!res.Succeeded)
+            {
+                return Result.BadRequest("لم يتم إزالة الدور");
+            }
+
+            return Result.Success("تم إزالة الدور بنجاح");
+        }
+
+        public async Task<Result<List<ResponseGetRolesByUserDto>>> GetAllRolesByUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null || user.IsDeleted)
+            {
+                return Result<List<ResponseGetRolesByUserDto>>.NotFound("المستخدم غير موجود ");
+            }
+            var roleNames = await _userManager.GetRolesAsync(user);
+
+            var roles = await _roleRepository.GetRolesByUserAsync(userId);
+
+            return Result<List<ResponseGetRolesByUserDto>>.Success(roles);
+
+
         }
     }
 }

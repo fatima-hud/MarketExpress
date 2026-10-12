@@ -1,13 +1,9 @@
-﻿using MarketExpress.Database;
+﻿using MarketExpress.Core.DtoHelping.Roles;
+using MarketExpress.Database;
 using MarketExpress.Infrastructure.Abstacts;
 using MarketExpress.Infrastructure.InfrastructureBases;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MarketExpress.Infrastructure.Repositories
 {
@@ -19,8 +15,25 @@ namespace MarketExpress.Infrastructure.Repositories
 
         public async Task<string?> GetRoleIdByName(string roleName)
         {
-          var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+            var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+
             return role?.Id;
+        }
+        public async Task<List<ResponseGetRolesByUserDto>> GetRolesByUserAsync(string userId)
+        {
+            var roles = await (
+            from userRole in _dbContext.UserRoles
+            join role in _dbContext.Roles
+                on userRole.RoleId equals role.Id
+            where userRole.UserId == userId
+            select new ResponseGetRolesByUserDto
+            {
+                RoleId = role.Id,
+                RoleName = role.Name!
+            }
+        ).ToListAsync();
+            return roles;
+
         }
     }
 }

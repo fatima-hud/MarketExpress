@@ -279,9 +279,9 @@ namespace MarketExpress.Infrastructure.Repositories
 
 
 
-        public async Task<List<ProductSize>> GetEmptyProductInventoryAsync(int storeId)
+        public async Task<List<ProductSize>> GetProductInventoryAlertAsync(int storeId)
         {
-            var res = await _dbContext.ProductSizes.Include(e => e.ProductColor).ThenInclude(e=>e.Product).Where(e => e.ProductColor.Product.StoreId == storeId && e.Quantity==0).ToListAsync();
+            var res = await _dbContext.ProductSizes.Include(e => e.ProductColor).ThenInclude(e=>e.Product).Where(e => e.ProductColor.Product.StoreId == storeId && e.Quantity<=5).ToListAsync();
             return res;
         }
 
@@ -304,5 +304,10 @@ namespace MarketExpress.Infrastructure.Repositories
             var res = await _dbContext.ProductColors.AnyAsync(e => e.ProductId == productId && e.Color == color);
             return res;
         }
+        public async Task<ProductColor>GetProductColorWithProductAsync(int productColorId)
+        {
+            var res = await _dbContext.ProductColors.Include(e => e.Product).FirstOrDefaultAsync(e => e.Id == productColorId);
+            return res;
+        } 
     }
 }

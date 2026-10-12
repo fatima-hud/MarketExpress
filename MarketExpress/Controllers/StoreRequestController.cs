@@ -18,119 +18,162 @@ namespace MarketExpress.Controllers
     {
         private readonly IStoreRequestService _storeRequestService;
         private readonly IUserService _userService;
-
-        public StoreRequestController(IStoreRequestService storeRequestService, IUserService userService)
+        private readonly ILogger<StoreRequestController> _logger;
+        public StoreRequestController(IStoreRequestService storeRequestService, IUserService userService, ILogger<StoreRequestController> logger)
         {
             _storeRequestService = storeRequestService;
             _userService = userService;
+            _logger = logger;
         }
         [Authorize(Roles = "User")]
         [HttpPost]
         public async Task<ApiResult<ResponseRequestStoreDto>> AddAsync([FromForm] RequestStoreDto request)
         {
-
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return ApiResult<ResponseRequestStoreDto>.Unauthorized();
-            }
-            if (!ModelState.IsValid)
-            {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseRequestStoreDto>.BadRequest(errors);
 
-            }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseRequestStoreDto>.Unauthorized();
+                }
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseRequestStoreDto>.BadRequest(errors);
 
-            var res = await _storeRequestService.AddAsync(userId, request);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
+                }
+
+                var res = await _storeRequestService.AddAsync(userId, request);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseRequestStoreDto>.Created(res.Value);
             }
-            return ApiResult<ResponseRequestStoreDto>.Created(res.Value);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while add store request");
+                return ApiResult<ResponseRequestStoreDto>.InternalServerError("حدث خطا داخلي");
+            }
         }
         [Authorize]
         [HttpPut("{storeRequestId}/cancel")]
         public async Task<ApiResult> CancelRequest(int storeRequestId)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult.Unauthorized();
+                }
+                var result = await _userService.CancelRequestAsync(userId, storeRequestId);
+                if (!result.IsSuccess)
+                {
+                    return this.ToApiResult(result);
+                }
+                return ApiResult.Ok("تم الغاء الطلب بنجاح");
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult.Unauthorized();
+                _logger.LogError(ex, "Error while occurred cancel request");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
             }
-            var result = await _userService.CancelRequestAsync(userId, storeRequestId);
-            if (!result.IsSuccess)
-            {
-                return this.ToApiResult(result);
-            }
-            return ApiResult.Ok("تم الغاء الطلب بنجاح");
         }
         [Authorize]
         [HttpPut("{storeId}/update")]
         public async Task<ApiResult<ResponseUpdateRequestStoreDto>> UpdateRequest(int storeId, RequestUpdateRequestStoreDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseUpdateRequestStoreDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseUpdateRequestStoreDto>.BadRequest(errors);
+
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseUpdateRequestStoreDto>.Unauthorized();
+                }
+                var result = await _userService.UpdateInfoRequestAsync(userId, storeId, request);
+                if (!result.IsSuccess)
+                {
+                    return this.ToApiResult(result);
+                }
+                return ApiResult<ResponseUpdateRequestStoreDto>.Ok(result.Value, "Updated Successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,"Error while occurred update request");
+                return ApiResult<ResponseUpdateRequestStoreDto>.InternalServerError("حدث خطا داخلي");
 
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return ApiResult<ResponseUpdateRequestStoreDto>.Unauthorized();
-            }
-            var result = await _userService.UpdateInfoRequestAsync(userId, storeId, request);
-            if (!result.IsSuccess)
-            {
-                return this.ToApiResult(result);
-            }
-            return ApiResult<ResponseUpdateRequestStoreDto>.Ok(result.Value, "Updated Successfully");
 
         }
         [Authorize(Roles = "SuperAdmin,User")]
         [HttpGet("{storeId}")]
         public async Task<ApiResult<ResponseGetFilesByStoreDto>> GetFilesByStoreAsync(int storeId)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetFilesByStoreDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseGetFilesByStoreDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetFilesByStoreDto>.Unauthorized();
+                }
+                var res = await _storeRequestService.GetFilesByStoreAsync(userId, storeId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetFilesByStoreDto>.Ok(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult<ResponseGetFilesByStoreDto>.Unauthorized();
+                _logger.LogError(ex, "Error while occurred get files by store");
+                return ApiResult<ResponseGetFilesByStoreDto>.InternalServerError("حدث خطا داخلي");
             }
-            var res = await _storeRequestService.GetFilesByStoreAsync(userId, storeId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseGetFilesByStoreDto>.Ok(res.Value);
 
         }
         [Authorize]
         [HttpGet]
         public async Task<ApiResult<List<ResponseOwnerStoreDto>>> GetAllRequestStoreByUser()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return ApiResult<List<ResponseOwnerStoreDto>>.Unauthorized();
+
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<List<ResponseOwnerStoreDto>>.Unauthorized();
+                }
+                var res = await _storeRequestService.GetAllRequestStoreByUserAsync(userId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<List<ResponseOwnerStoreDto>>.Ok(res.Value);
             }
-            var res = await _storeRequestService.GetAllRequestStoreByUserAsync(userId);
-            if (!res.IsSuccess)
+            catch (Exception ex)
             {
-                return this.ToApiResult(res);
+                _logger.LogError(ex, "Error while occurred get all request store by user");
+                return ApiResult<List<ResponseOwnerStoreDto>>.InternalServerError("حدث خطا داخلي");
             }
-            return ApiResult<List<ResponseOwnerStoreDto>>.Ok(res.Value);
 
         }
 
@@ -139,24 +182,32 @@ namespace MarketExpress.Controllers
         [HttpGet]
         public async Task<ApiResult<List<ResponseOwnerStoreDto>>> GetFilterRequestStoreByUser([FromQuery] enStoreStatus storeStatus)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<List<ResponseOwnerStoreDto>>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<List<ResponseOwnerStoreDto>>.BadRequest(errors);
+
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<List<ResponseOwnerStoreDto>>.Unauthorized();
+                }
+                var res = await _storeRequestService.GetFilterRequestStoresByUserAsync(userId, storeStatus);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<List<ResponseOwnerStoreDto>>.Ok(res.Value);
 
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch (Exception ex)
             {
-                return ApiResult<List<ResponseOwnerStoreDto>>.Unauthorized();
+                _logger.LogError(ex, "Error while occurred get filter request store by user");
+                return ApiResult<List<ResponseOwnerStoreDto>>.InternalServerError("حدث خطا داخلي");
             }
-            var res = await _storeRequestService.GetFilterRequestStoresByUserAsync(userId, storeStatus);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<List<ResponseOwnerStoreDto>>.Ok(res.Value);
-
         }
 
 

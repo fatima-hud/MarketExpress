@@ -11,8 +11,7 @@ namespace MarketExpress.Application.Dto.Post.Request
 {
     public class RequestAddPostDto
     {
-        [Required]
-        public int StoreId { get; set; }
+      
         public string? Content { get; set; }
       
         public enPostVisibility Visibility { get; set; }

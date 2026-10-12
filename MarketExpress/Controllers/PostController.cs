@@ -18,91 +18,132 @@ namespace MarketExpress.Controllers
     public class PostController : ControllerBase
     {
         private readonly IPostService _postService;
+        private readonly ILogger<PostController> _logger;
 
-        public PostController(IPostService postService)
+        public PostController(IPostService postService, ILogger<PostController> logger)
         {
             _postService = postService;
+            _logger = logger;
         }
-     /*   [Authorize(Roles ="SocialMediaManager")]
+        [Authorize(Roles ="Admin")]
         [HttpPost]
         public async Task<ApiResult<ResponseGetPostDto>> Add([FromForm] RequestAddPostDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetPostDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseGetPostDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetPostDto>.Unauthorized();
+                }
+                var res = await _postService.AddAsync(userId, request);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetPostDto>.Created(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult<ResponseGetPostDto>.Unauthorized();
+                _logger.LogError(ex, "An error occurred while adding a post.");
+                return ApiResult<ResponseGetPostDto>.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _postService.AddAsync(userId, request);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseGetPostDto>.Created(res.Value);
         }
 
-        [Authorize(Roles = "SocialMediaManager")]
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{postId}")]
         public async Task<ApiResult>Delete( int postId)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult.Unauthorized();
+                }
+                var res = await _postService.DeleteAsync(userId, postId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult.Ok(res.Message);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult.Unauthorized();
+                _logger.LogError(ex, "An error occurred while deleting a post.");
+                return ApiResult.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _postService.DeleteAsync(userId, postId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult.Ok(res.Message);
         }
-
+        [AllowAnonymous]
         [HttpGet("{storeId}")]
         public async Task<ApiResult<List<ResponseGetPostDto>>> GetAll( int storeId)
         {
-         
-            var res = await _postService.GetAllAsync(storeId);
-            if (!res.IsSuccess)
+            try
             {
-                return this.ToApiResult(res);
+
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<List<ResponseGetPostDto>>.BadRequest(errors);
+
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var res = await _postService.GetAllAsync(userId, storeId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<List<ResponseGetPostDto>>.Ok(res.Value);
             }
-            return ApiResult<List<ResponseGetPostDto>>.Ok(res.Value);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving posts.");
+                return ApiResult<List<ResponseGetPostDto>>.InternalServerError("حدث خطا داخلي ");
+            }
         }
-        [Authorize(Roles = "SocialMediaManager")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("{postId}")]
         public async Task<ApiResult<ResponseGetPostDto>> Update(int postId,[FromForm] RequestUpdatePostDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetPostDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseGetPostDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetPostDto>.Unauthorized();
+                }
+                var res = await _postService.UpdateAsync(userId, postId, request);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetPostDto>.Ok(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult<ResponseGetPostDto>.Unauthorized();
+                _logger.LogError(ex, "An error occurred while updating a post.");
+                return ApiResult<ResponseGetPostDto>.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _postService.UpdateAsync(userId,postId,request);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseGetPostDto>.Ok(res.Value);
         }
 
-        */
+        
     }
 }

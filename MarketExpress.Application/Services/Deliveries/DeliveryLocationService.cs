@@ -10,7 +10,9 @@ namespace MarketExpress.Application.Services.Deliveries
 {
     public class DeliveryLocationService : IDeliveryLocationService
     {
-        private readonly IDeliveryLocationRepository _deliveryLocationRepository;
+    }
+}
+      /*  private readonly IDeliveryLocationRepository _deliveryLocationRepository;
         private readonly IDeliveryRepository _deliveryRepository;
         private readonly UserManager<User> _userManager;
         private readonly IOrderRepository _orderRepository;
@@ -104,4 +106,4 @@ namespace MarketExpress.Application.Services.Deliveries
 
         }
     }
-}
+}*/

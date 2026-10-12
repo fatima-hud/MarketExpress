@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MarketExpress.Infrastructure.Configurations
 {
-    public class UserNotificationConfiguration : IEntityTypeConfiguration<UserNotification>
+    public class UserNotificationConfiguration// : IEntityTypeConfiguration<UserNotification>
     {
-        public void Configure(EntityTypeBuilder<UserNotification> builder)
+     /*   public void Configure(EntityTypeBuilder<UserNotification> builder)
         {
-            builder.HasOne(e => e.User).WithMany(e => e.ReceivedNotifications).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
-        }
+         //   builder.HasOne(e => e.User).WithMany(e => e.ReceivedNotifications).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        }*/
     }
 }

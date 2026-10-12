@@ -23,8 +23,6 @@ namespace MarketExpress.Application.Dto.Store.Response
 
         public TimeSpan WorkingHoursEnd { get; set; }
 
-        public decimal Latitude { get; set; }
-        public decimal Longitude { get; set; }
       
         public bool IsActive {  get; set; }
    

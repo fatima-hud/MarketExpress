@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Application.Dto.Product.Response;
+using MarketExpress.Application.Dto.Store.Response;
 using MarketExpress.Application.Dto.StoreFollower.Request;
 using MarketExpress.Application.Dto.StoreFollower.Response;
 using MarketExpress.Core.Entity;
@@ -34,7 +35,7 @@ namespace MarketExpress.Application.Services.StoreFollowers
         public async Task<Result<List<ResponseGetProductsFollowerDto>>> GetProductsOfFollowerStoresByUserAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<List<ResponseGetProductsFollowerDto>>.NotFound("المستخدم غير موجود");
             }
@@ -52,6 +53,7 @@ namespace MarketExpress.Application.Services.StoreFollowers
                 {
                     Id = product.Id,
                     StoreId = product.StoreId,
+                    StoreName=product.Store.StoreName,
                     Name = product.Name,
                     Image = product.Image,
                     CategoryId = product.CategoryId,
@@ -69,10 +71,52 @@ namespace MarketExpress.Application.Services.StoreFollowers
 
         }
 
+        public async Task<Result<List<ResponseStoreDto>>> GetStoreFollowByUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null || user.IsDeleted)
+            {
+                return Result<List<ResponseStoreDto>>.NotFound("المستخدم غير موجود");
+            }
+            var res = await _storeFollowerRepository.GetStoreFollowByUserAsync(userId);
+            if(res is null)
+            {
+                return Result<List<ResponseStoreDto>>.Success(new List<ResponseStoreDto>());
+
+            }
+            var ret = res.Select(s => new ResponseStoreDto
+            {
+                Id = s.Id,
+                Description = s.Description,
+                Address = s.Address,
+                IsActive = s.IsActive,
+                FeaturedImage = s.FeaturedImage,
+                StoreEmail = s.Email,
+                Logo = s.Logo,
+                StoreName = s.StoreName,
+                StorePhoneNumber = s.PhoneNumber,
+                WorkingHoursStart = s.WorkingHoursStart,
+                WorkingHoursEnd = s.WorkingHoursEnd
+            }).ToList();
+            return Result<List<ResponseStoreDto>>.Success(ret);
+            
+        }
+
+        public async Task<Result<int>> GetStoreFollowersCountAsync(int storeId)
+        {
+            var store = await _storeRepository.GetByIdAsync(storeId);
+            if (store == null)
+            {
+                return Result<int>.NotFound("المتجر غير موجود");
+            }
+            var res = await _storeFollowerRepository.GetStoreFollowersCountAsync(storeId);
+            return Result<int>.Success(res);
+        }
+
         public async Task<Result<ResponseGetStoreFollowerDto>> UpdateFollowAsync(string userId,RequestFollowStoreDto request)
         {
             var user=await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseGetStoreFollowerDto>.NotFound("المستخدم غير موجود");
             }

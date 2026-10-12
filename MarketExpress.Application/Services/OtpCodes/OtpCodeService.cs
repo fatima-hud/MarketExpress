@@ -1,8 +1,11 @@
 ﻿using MarketExpress.Application.Dto.Authontication.Request;
+using MarketExpress.Application.Dto.Wallet.Response;
 using MarketExpress.Application.Services.Emails;
+using MarketExpress.Core.Entity;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Results;
 using MarketExpress.Infrastructure.Abstacts;
+using MarketExpress.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -19,11 +22,15 @@ namespace MarketExpress.Application.Services.OtpCodes
         private readonly UserManager<User> _userManager;
         private readonly IEmailService _emailService;
 
-        public OtpCodeService(IOtpCodeRepository otpCodeRepository, UserManager<User> userManager, IEmailService emailService)
+        private readonly IUserRepository _userRepository;
+        private readonly IWalletRepository _walletRepository;
+        public OtpCodeService(IOtpCodeRepository otpCodeRepository, UserManager<User> userManager, IEmailService emailService, IUserRepository userRepository, IWalletRepository walletRepository)
         {
             _otpCodeRepository = otpCodeRepository;
             _userManager = userManager;
             _emailService = emailService;
+            _userRepository = userRepository;
+            _walletRepository = walletRepository;
         }
 
         public async Task<Result> ConfirmEmailAsync(ConfirmEmailRequest request)
@@ -32,9 +39,9 @@ namespace MarketExpress.Application.Services.OtpCodes
             {
                 return Result.BadRequest("@:البريد الإلكتروني يجب أن يتضمن اسم نطاق صالح ورمز");
             }
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            var user = await _userRepository.GetActiveUserByEmailAsync(request.Email);
 
-            if (user is null)
+            if (user is null || user.IsDeleted)
                 return Result.NotFound($"مستخدم غير موجود");
             if (user.EmailConfirmed)
             {
@@ -55,6 +62,22 @@ namespace MarketExpress.Application.Services.OtpCodes
            
             if (codes != null)
                 await _otpCodeRepository.DeleteRangeAsync(codes);
+        
+
+            var existingWallet = await _walletRepository.GetWalletByUserIdAsync(user.Id);
+            if (existingWallet == null)
+            {
+                var wallet = new Wallet
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Balance = 0
+
+                };
+                await _walletRepository.AddAsync(wallet);
+
+
+            }
 
             return Result.Success();
         }
@@ -69,13 +92,59 @@ namespace MarketExpress.Application.Services.OtpCodes
 
 
                 var htmlMessage = $@"
-<h3>Confirm your email</h3>
-<p>Please enter this code to confirm your account:</p>
-<P> Code : '{randomNumber}'</P>
-<p>If you did not create this account, ignore this email.</p>";
+<!DOCTYPE html>
+<html lang=""ar"" dir=""rtl"">
+<head>
+    <meta charset=""UTF-8"">
+    <title>تأكيد البريد الإلكتروني</title>
+</head>
 
+<body style=""font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 30px;"">
+
+    <div style=""max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 10px;"">
+
+        <h2 style=""text-align: center;"">تأكيد البريد الإلكتروني</h2>
+
+        <p>مرحبًا،</p>
+
+        <p>
+            لقد طلبت إنشاء حساب في <strong>موضة</strong>.
+            استخدم رمز التحقق التالي لتأكيد بريدك الإلكتروني:
+        </p>
+
+        <div style=""text-align: center; margin: 30px 0;"">
+            <span style=""
+                display: inline-block;
+                font-size: 32px;
+                font-weight: bold;
+                letter-spacing: 8px;
+                padding: 15px 25px;
+                background: #f0f0f0;
+                border-radius: 8px;"">
+                {randomNumber}
+            </span>
+        </div>
+
+        <p>
+            هذا الرمز مخصص لتأكيد حسابك، ولا تشاركه مع أي شخص.
+        </p>
+
+        <p>
+            إذا لم تكن أنت من طلب إنشاء الحساب، يمكنك تجاهل هذه الرسالة.
+        </p>
+
+        <hr>
+
+        <p style=""text-align: center; color: #777;"">
+            فريق موضة
+        </p>
+
+    </div>
+
+</body>
+</html>";
                 Console.WriteLine("Before SEND EMAIL");
-                var res = await _emailService.SendEmailAsync(Email, "Confirm your email", htmlMessage);
+                var res = await _emailService.SendEmailAsync(Email, "أكد بريدك الالكتروني", htmlMessage);
                 Console.WriteLine("AFTER SEND EMAIL");
                 if (!res) return null;
                 return randomNumber;
@@ -90,42 +159,52 @@ namespace MarketExpress.Application.Services.OtpCodes
         }
         public async Task<Result> ResendOtpCodeAsync(ResendOtpRequest request)
         {
-            var trans = await _otpCodeRepository.BeginTransactionAsync();
             try
             {
                 if (!await CheckFormEmailAsync(request.Email))
                 {
-                    return Result.BadRequest("@:البريد الإلكتروني يجب أن يتضمن اسم نطاق صالح ورمز");
+                    return Result.BadRequest("البريد الإلكتروني يجب أن يتضمن اسم نطاق صالح ورمز");
                 }
+
                 var user = await _userManager.FindByEmailAsync(request.Email);
+
                 if (user == null)
                     return Result.BadRequest("ادخال خاطئ");
-
-
 
                 var code = await CreateOtp(request.Email);
 
                 if (code is null)
                 {
-                    await trans.RollbackAsync();
                     return Result.BadRequest("فشل في ارسال تاكيد الايميل");
                 }
-                if (!await _otpCodeRepository.AddCodeAsync(user.Id, code))
+
+                await using var trans =
+                    await _otpCodeRepository.BeginTransactionAsync();
+
+                try
+                {
+                    if (!await _otpCodeRepository.AddCodeAsync(user.Id, code))
+                    {
+                        await trans.RollbackAsync();
+                        return Result.BadRequest("");
+                    }
+
+                    await trans.CommitAsync();
+
+                    return Result.Success();
+                }
+                catch
                 {
                     await trans.RollbackAsync();
-                    return Result.BadRequest("");
+                    throw;
                 }
-
-
-                await trans.CommitAsync();
-                return Result.Success();
             }
-
             catch (Exception ex)
             {
-                await trans.RollbackAsync();
-                return Result.Failure("خطا داخلي", failureType: ResultFailureType.InternalError);
-
+                // Log ex هنا
+                return Result.Failure(
+                    "خطا داخلي",
+                    failureType: ResultFailureType.InternalError);
             }
         }
 

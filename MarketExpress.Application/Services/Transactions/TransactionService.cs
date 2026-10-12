@@ -25,7 +25,7 @@ namespace MarketExpress.Application.Services.Transactions
         public async Task<Result<ResponseGetTransactionDto>> AddTransactionAsync(string employeeId, RequestAddTransactionDto request)
         {
             var employee = await _userManager.FindByIdAsync(employeeId);
-            if (employee == null)
+            if (employee == null || employee.IsDeleted)
             {
                 return Result<ResponseGetTransactionDto>.NotFound("مستخدم غير موجود");
             }
@@ -71,7 +71,7 @@ namespace MarketExpress.Application.Services.Transactions
         {
 
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<List<ResponseGetTransactionDto>>.NotFound("مستخدم غير موجود");
             }

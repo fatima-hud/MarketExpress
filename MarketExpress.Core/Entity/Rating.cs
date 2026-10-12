@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MarketExpress.Core.Entity.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,5 +16,6 @@ namespace MarketExpress.Core.Entity
       
         public DateTime CreatedAt { get; set; }
         public Product Product {  get; set; }
+        public User User  { get; set; }
     }
 }

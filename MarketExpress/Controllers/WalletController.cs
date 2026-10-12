@@ -18,49 +18,66 @@ namespace MarketExpress.Controllers
     public class WalletController : ControllerBase
     {
         private readonly IWalletService _walletService;
-
-        public WalletController(IWalletService walletService)
+        private readonly ILogger<WalletController>_logger;
+        public WalletController(IWalletService walletService, ILogger<WalletController> logger)
         {
             _walletService = walletService;
+            _logger = logger;
         }
         [HttpGet]
         [Authorize]
         public async Task<ApiResult<ResponseGetWalletDto>> GetWalletAsync()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return ApiResult<ResponseGetWalletDto>.Unauthorized();
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetWalletDto>.Unauthorized();
+                }
+                var res = await _walletService.GetWalletAsync(userId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetWalletDto>.Ok(res.Value);
             }
-            var res = await _walletService.GetWalletAsync(userId);
-            if (!res.IsSuccess)
+            catch (Exception ex)
             {
-                return this.ToApiResult(res);
+                _logger.LogError(ex, "Error occurred while get wallet");
+                return ApiResult<ResponseGetWalletDto>.InternalServerError("حدث خطا داخلي");
             }
-            return ApiResult<ResponseGetWalletDto>.Ok(res.Value);
 
         }
         [HttpPost]
         [Authorize]
         public async Task<ApiResult<ResponseGetWalletDto>> AddWalletAsync()
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetWalletDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseGetWalletDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetWalletDto>.Unauthorized();
+                }
+                var res = await _walletService.AddWalletAsync(userId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetWalletDto>.Created(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch (Exception ex)
             {
-                return ApiResult<ResponseGetWalletDto>.Unauthorized();
+                _logger.LogError(ex, "Error occurred while add wallet");
+                return ApiResult<ResponseGetWalletDto>.InternalServerError("حدث خطا داخلي");
             }
-            var res = await _walletService.AddWalletAsync(userId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseGetWalletDto>.Created(res.Value);
         }
     }
 }

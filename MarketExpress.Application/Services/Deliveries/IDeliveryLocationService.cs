@@ -6,7 +6,7 @@ namespace MarketExpress.Application.Services.Deliveries
 {
     public interface IDeliveryLocationService
     {
-        Task<Result<ResponseDeliveryLocationDto>> AddAsync(RequestAddDeliveryLocationDto request);
-        Task<Result<List<ResponseGetDeliveryLocationDto>>> GetAsync(string userId,int deliveryId);
+      //  Task<Result<ResponseDeliveryLocationDto>> AddAsync(RequestAddDeliveryLocationDto request);
+     //   Task<Result<List<ResponseGetDeliveryLocationDto>>> GetAsync(string userId,int deliveryId);
     }
 }

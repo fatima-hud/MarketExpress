@@ -1,4 +1,6 @@
 ﻿using MarketExpress.Core.Entity;
+using MarketExpress.Core.Entity.Identity;
+using MarketExpress.Core.Enums;
 using MarketExpress.Database;
 using MarketExpress.Infrastructure.Abstacts;
 using MarketExpress.Infrastructure.InfrastructureBases;
@@ -17,6 +19,13 @@ namespace MarketExpress.Infrastructure.Repositories
         {
         }
 
+        public async Task<List<Order>> GetAllFilterOrdersAsync(enOrderStatus orderStatus,int pageNumber,int pageSize)
+        {
+            var orders = await _dbContext.Orders.AsNoTracking().Include(o=>o.User).Where(e => e.Status==orderStatus).OrderByDescending(e => e.CreatedAt).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return orders;
+        }
+
         public async Task<List<Order>> GetAllOrderAsync(string userId)
         {
             var orders=await _dbContext.Orders.Where(e=>e.UserId == userId).OrderByDescending(e=>e.CreatedAt).ToListAsync();
@@ -24,5 +33,6 @@ namespace MarketExpress.Infrastructure.Repositories
             return orders;
             
         }
+
     }
 }

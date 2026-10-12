@@ -25,17 +25,17 @@ namespace MarketExpress.Application.Services.Ratings
         {
             var prod = await _productRepository.GetByIdAsync(request.ProductId);
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
-                return Result<ResponseRatingDto>.NotFound("Not found user");
+                return Result<ResponseRatingDto>.NotFound("المستخدم غير موجود");
             }
             if (user.IsBanned)
             {
-                return Result<ResponseRatingDto>.BadRequest("User is banned");
+                return Result<ResponseRatingDto>.BadRequest("مستخدم محظور");
             }
             if (prod == null)
             {
-                return Result<ResponseRatingDto>.NotFound("Not found product");
+                return Result<ResponseRatingDto>.NotFound("المنتج غير موجود");
             }
             var rating = await _ratingRepository.GetUserRatingForProductAsync(userId, request.ProductId);
 
@@ -51,7 +51,7 @@ namespace MarketExpress.Application.Services.Ratings
             }
             if (request.RatingValue <= 0 || request.RatingValue > 5)
             {
-                return Result<ResponseRatingDto>.BadRequest("Rating should be greater than 0 and less than 6");
+                return Result<ResponseRatingDto>.BadRequest("التقييم يجب يكون بين 1 و 5");
 
             }
             if (rating != null)
@@ -93,17 +93,17 @@ namespace MarketExpress.Application.Services.Ratings
         {
             var prod = await _productRepository.GetByIdAsync(productId);
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
-                return Result<int>.NotFound("Not found user");
+                return Result<int>.NotFound("مستخدم غير موجود");
             }
             if (user.IsBanned)
             {
-                return Result<int>.BadRequest("User is banned");
+                return Result<int>.BadRequest("مستخدم محظور");
             }
             if (prod == null)
             {
-                return Result<int>.NotFound("Not found product");
+                return Result<int>.NotFound("منتج غير موجود");
             }
             var rating = await _ratingRepository.GetUserRatingForProductAsync(userId, productId);
             if (rating is null) return Result<int>.Success(0);

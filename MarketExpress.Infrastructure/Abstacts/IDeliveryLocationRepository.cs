@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace MarketExpress.Infrastructure.Abstacts
 {
-   public interface IDeliveryLocationRepository: IGenericRepositoryAsync<DeliveryLocation>
+   public interface IDeliveryLocationRepository//: IGenericRepositoryAsync<DeliveryLocation>
     {
-        Task<List<DeliveryLocation>> GetAllLocationByDeliveryAsync(int deliveryId);
+   //     Task<List<DeliveryLocation>> GetAllLocationByDeliveryAsync(int deliveryId);
 
     }
 }

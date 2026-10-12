@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Application.Dto.Role.Request;
+using MarketExpress.Core.DtoHelping.Admin.Response;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Results;
 using MarketExpress.Infrastructure.Abstacts;
@@ -17,19 +18,21 @@ namespace MarketExpress.Application.Services.Admin
         private readonly IRoleRepository _roleRepository;
         private readonly IStoreRepository _storeRepository;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IProductRepository _productRepository;
 
-        public AdminService(UserManager<User> userManager, IRoleRepository roleRepository, IStoreRepository storeRepository, RoleManager<IdentityRole> roleManager)
+        public AdminService(UserManager<User> userManager, IRoleRepository roleRepository, IStoreRepository storeRepository, RoleManager<IdentityRole> roleManager,IProductRepository productRepository)
         {
             _userManager = userManager;
             _roleRepository = roleRepository;
             _storeRepository = storeRepository;
             _roleManager = roleManager;
+            _productRepository = productRepository;
         }
-
+/*
         public async Task<Result> AddRole(string adminId, RequestAddRoleDto request)
         {
             var admin = await _userManager.FindByIdAsync(adminId);
-            if (admin == null)
+            if (admin == null || admin.IsDeleted)
             {
                 return Result.NotFound("الادمن غير موجود");
             }
@@ -57,12 +60,12 @@ namespace MarketExpress.Application.Services.Admin
                 {
                     return Result.NotFound("المتجر غير موجود");
                 }
-                if (!string.IsNullOrEmpty(store.SocialMediaManagerUserId))
+               /* if (!string.IsNullOrEmpty(store.SocialMediaManagerUserId))
                 {
                     return Result.BadRequest("يرجى حذف مسؤول السوشال ميديا اولا");
 
                 }
-                var isUserSocialMediaManager = await _userManager.IsInRoleAsync(user, "SocialMediaManager");
+               /* var isUserSocialMediaManager = await _userManager.IsInRoleAsync(user, "SocialMediaManager");
                 if (isUserSocialMediaManager)
                 {
                     return Result.BadRequest("مستخدم مسؤول السوشال ميديا لمتجر اخر");
@@ -73,12 +76,47 @@ namespace MarketExpress.Application.Services.Admin
             await _storeRepository.SaveChangesAsync();
             return Result.Success("تم اضافة دور بنجاح");
 
+        }*/
+
+        public async Task<Result<ResponseDashboardAnalyticsDto>> GetDashboardAnalyticsAsync(string adminId,DateTime? fromDate, DateTime? endDate)
+        {
+            var admin = await _userManager.FindByIdAsync(adminId);
+            if (admin == null || admin.IsDeleted)
+            {
+                return Result<ResponseDashboardAnalyticsDto>.NotFound("الادمن غير موجود");
+            }
+            var store = await _storeRepository.GetStoreByAdminAsync(adminId);
+            if(store is null)
+            {
+                return Result<ResponseDashboardAnalyticsDto>.NotFound("المتجر غير موجود");
+            }
+            fromDate ??= DateTime.UtcNow.AddMonths(-1);
+            endDate ??= DateTime.UtcNow;
+            var ret = await _productRepository.GetDashboardAnalyticsAsync(store.Id, fromDate.Value, endDate.Value);
+            return Result<ResponseDashboardAnalyticsDto>.Success(ret);
         }
 
+        public async  Task<Result<ResponseDashboardSummaryDto>> GetDashboardSummaryAsync(string adminId)
+        {
+            var admin = await _userManager.FindByIdAsync(adminId);
+            if (admin == null || admin.IsDeleted)
+            {
+                return Result<ResponseDashboardSummaryDto>.NotFound("الادمن غير موجود");
+            }
+            var store = await _storeRepository.GetStoreByAdminAsync(adminId);
+            if (store is null)
+            {
+                return Result<ResponseDashboardSummaryDto>.NotFound("المتجر غير موجود");
+            }
+            var ret = await _productRepository.GetDashboardSummaryAsync(store.Id);
+            return Result<ResponseDashboardSummaryDto>.Success(ret);
+
+        }
+        /*
         public async Task<Result> RemoveRole(string adminId, RequestAddRoleDto request)
         {
             var admin = await _userManager.FindByIdAsync(adminId);
-            if (admin == null)
+            if (admin == null || admin.IsDeleted)
             {
                 return Result.NotFound("الادمن غير موجود");
             }
@@ -114,6 +152,6 @@ namespace MarketExpress.Application.Services.Admin
             }
             await _userManager.RemoveFromRoleAsync(user, role.Name);
             return Result.Success("تم حذف الدور بنجاح");
-        }
+        }*/
     }
 }

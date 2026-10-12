@@ -20,7 +20,7 @@ namespace MarketExpress.Application.Services.CartItems
         private readonly IProductColorRepository _clothingItemRepository;
         private readonly IProductSizeRepository _productSizeRepository;
 
-        public CartItemService(ICartItemRepository cartItemRepository, ICartRepository cartRepository, IProductRepository productRepository, UserManager<User> userManager, IProductColorRepository clothingItemRepository ,IProductSizeRepository productSizeRepository)
+        public CartItemService(ICartItemRepository cartItemRepository, ICartRepository cartRepository, IProductRepository productRepository, UserManager<User> userManager, IProductColorRepository clothingItemRepository, IProductSizeRepository productSizeRepository)
         {
             _cartItemRepository = cartItemRepository;
             _cartRepository = cartRepository;
@@ -33,7 +33,7 @@ namespace MarketExpress.Application.Services.CartItems
         public async Task<Result<ResponseCartItemDto>> AddAsync(string userId, RequestCartItemDto dto)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseCartItemDto>.NotFound("المستخدم غير موجود");
             }
@@ -126,7 +126,7 @@ namespace MarketExpress.Application.Services.CartItems
                
                 var res = new ResponseCartItemDto
                 {
-                    UserId = user.Id,
+                   
                     StoreId = product.StoreId,
                     CartId = cartItem.CartId,
                     ProductId = product.Id,
@@ -155,7 +155,7 @@ namespace MarketExpress.Application.Services.CartItems
         public async Task<Result> DeleteAsync(string userId, RequestDeleteItemsFromCartDto request)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result.NotFound("المستخدم غير موجود");
             }
@@ -188,7 +188,7 @@ namespace MarketExpress.Application.Services.CartItems
         public async Task<Result<ResponseGetInfoCartDto> >GetItemsFromCartIdAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseGetInfoCartDto>.NotFound("المستخدم غير موجود");
             }
@@ -219,7 +219,7 @@ namespace MarketExpress.Application.Services.CartItems
         public async Task<Result<ResponseUpdateQuantityItemInCartDto>> UpdateAsync(string userId,int cartItemId,  UpdateCartItemDto request)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseUpdateQuantityItemInCartDto>.NotFound("المستخدم غير موجود");
             }

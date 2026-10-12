@@ -35,6 +35,7 @@ using MarketExpress.Application.Services.Admin;
 using MarketExpress.Application.Services.Posts;
 using MarketExpress.Application.Services.Videos;
 using MarketExpress.Application.Services.StoreFollowers;
+using MarketExpress.Application.Services.PostReactions;
 namespace MarketExpress.Extensions
 {
     public static class ServiceCollectionExtensions
@@ -74,14 +75,14 @@ namespace MarketExpress.Extensions
             services.AddScoped<ISuperAdminService, SuperAdminService>();
             services.AddScoped<IStoreRequestService, StoreRequestService>();
             services.AddScoped<IDocumentRepository, DocumentRepository>();
-            services.AddScoped<INotificationRepository, NotificationRepository>();
-            services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
+           // services.AddScoped<INotificationRepository, NotificationRepository>();
+           // services.AddScoped<IUserNotificationRepository, UserNotificationRepository>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IUserNotificationService, UserNotificationService>();
-            services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+           // services.AddScoped<IDeliveryRepository, DeliveryRepository>();
             services.AddScoped<IDeliveryService, DeliveryService>();
             services.AddScoped<IDeliveryLocationService, DeliveryLocationService>();
-            services.AddScoped<IDeliveryLocationRepository, DeliveryLocationRepository>();
+          //  services.AddScoped<IDeliveryLocationRepository, DeliveryLocationRepository>();
            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IOtpCodeService, OtpCodeService>();
            
@@ -108,6 +109,7 @@ namespace MarketExpress.Extensions
             services.AddScoped<IPostMediaRepository, PostMediaRepository>();
             services.AddScoped<IVideoService, VideoService>();
             services.AddScoped<IStoreFollowerService, StoreFollowerService>();
+            services.AddScoped<IPostReactionService, PostReactionService>();
 
         }
     }

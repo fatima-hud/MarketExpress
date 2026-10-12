@@ -12,5 +12,7 @@ namespace MarketExpress.Infrastructure.Abstacts
     {
         Task<StoreFollower?> GetStoreFollowerByUserAsync(string userId,int storeId);
         Task<List<Product>> GetProductsofStoreFollowerByUserIdAsync(string userId);
+        Task<int>GetStoreFollowersCountAsync(int storeId);
+        Task<List<Store>> GetStoreFollowByUserAsync(string userId);
     }
 }

@@ -1,6 +1,9 @@
 ﻿using MarketExpress.Application.Dto.Product.Request;
 using MarketExpress.Application.Dto.Product.Response;
+using MarketExpress.Application.Dto.Response;
+using MarketExpress.Application.Dto.Store.Response;
 using MarketExpress.Application.Services.Images;
+using MarketExpress.Core.DtoHelping.Admin.Response;
 using MarketExpress.Core.Entity;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Results;
@@ -39,11 +42,18 @@ namespace MarketExpress.Application.Services.Products
             var trans = await _productRepository.BeginTransactionAsync();
             try
             {
+                var isAdminActive = await _userManager.FindByIdAsync(userId);
+                if (isAdminActive is not null && isAdminActive.IsDeleted)
+                {
+
+                    return Result<ResponseProductDetailsDto>.BadRequest("المستخدم غير موجود");
+                }
                 var store = await _storeRepository.GetStoreByAdminAsync(userId);
                 if (store is null)
                 {
                     return Result<ResponseProductDetailsDto>.NotFound("مستخدم ليس لديه متجر");
                 }
+              
 
 
                 var category = await _categoryRepository.GetByIdAsync(request.CategoryId);
@@ -112,6 +122,7 @@ namespace MarketExpress.Application.Services.Products
                     Season = request.Season,
                     Gender = request.Gender,
                     Type = request.Type,
+                    Occasion=request.Occasion,
                     Image = image.Value,
                     DiscountPercentage = request.DiscountPrecentage,
                     DiscountStartDate = request.DiscountStartDate,
@@ -131,7 +142,7 @@ namespace MarketExpress.Application.Services.Products
                     StoreId = prod.StoreId,
                     CategoryId = prod.CategoryId,
                     Price = prod.Price,
-
+                    
                     Image = prod.Image,
                     DiscountPercentage = request.DiscountPrecentage,
                     DiscountStartDate = prod.DiscountStartDate,
@@ -165,6 +176,12 @@ namespace MarketExpress.Application.Services.Products
                 return Result.NotFound("منتج غير موجود");
 
             }
+            var isAdminActive = await _userManager.FindByIdAsync(userId);
+            if (isAdminActive is not null && isAdminActive.IsDeleted)
+            {
+
+                return Result.BadRequest("المستخدم غير موجود");
+            }
 
             var store = await _storeRepository.GetByIdAsync(product.StoreId);
             if (store == null)
@@ -189,38 +206,19 @@ namespace MarketExpress.Application.Services.Products
 
         public async Task<Result<List<ResponseGetDiscountProductDto>>> FilterAsync(FilterDto dto)
         {
-            var products = await _productRepository.FilterAsync(dto.Type, dto.Color, dto.Size);
-            var filter = products.Where(e => e.PriceAfterDiscount >= dto.minPrice && e.PriceAfterDiscount <= dto.maxPrice).ToList();
+            var products = await _productRepository.FilterAsync(dto.Type, dto.Color, dto.Size,dto.minPrice,dto.maxPrice);
+            
 
             var res = new List<ResponseGetDiscountProductDto>();
-            if (filter == null || filter.Count == 0)
+            if (products == null || products.Count == 0)
 
             {
                 return Result<List<ResponseGetDiscountProductDto>>.Success(res);
             }
-            var ret = await Task.WhenAll(
-          filter.Select(async p => new ResponseGetDiscountProductDto
-          {
-              Id = p.Id,
-              Name = p.Name,
-              StoreId = p.StoreId,
+           
+      
 
-              Price = p.Price,
-              DiscountPercentage = p.DiscountPercentage,
-              DiscountStartDate = p.DiscountStartDate,
-              DiscountEndDate = p.DiscountEndDate,
-
-              PriceAfterDiscount = p.PriceAfterDiscount,
-
-              Image = string.IsNullOrEmpty(dto.Color)
-                  ? p.Image
-                  : await _productColorRepository
-                      .GetClothingItemImageAsync(p.Id, dto.Color)
-                      ?? p.Image
-          })
-      );
-
-            return Result<List<ResponseGetDiscountProductDto>>.Success(ret.ToList(), "Success");
+            return Result<List<ResponseGetDiscountProductDto>>.Success(products, "Success");
 
         }
 
@@ -250,7 +248,7 @@ namespace MarketExpress.Application.Services.Products
         public async Task<Result<List<ResponseGetDiscountProductByStoreDto>>> GetAllDiscountProductByStore(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<List<ResponseGetDiscountProductByStoreDto>>.NotFound("المستخدم غير موجود");
             }
@@ -313,6 +311,37 @@ namespace MarketExpress.Application.Services.Products
                 Sizes = sizes
             };
             return Result<ResponseProductDetailsDto>.Success(res);
+
+        }
+
+        public async Task<Result<ResponseProductDashboardDto>> GetProductDashboardsAsync(string userId, int pageNumber,int pageSize)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null || user.IsDeleted)
+            {
+                return Result<ResponseProductDashboardDto>.NotFound("مستخدم غير موجود");
+            }
+           
+            var store = await _storeRepository.GetStoreByAdminAsync(userId);
+            if (store is null)
+            {
+                
+                return Result<ResponseProductDashboardDto>.NotFound("متجر غير موجود");
+            }
+            if(pageNumber <=0)
+            {
+                pageNumber = 1;
+            }
+            if (pageSize <= 0)
+                pageSize = 10;
+
+            if (pageSize > 50)
+                pageSize = 50;
+
+            var ret = await _productRepository.GetProductDashboardsAsync(store.Id,pageNumber,pageSize);
+             return Result<ResponseProductDashboardDto>.Success(ret);
+            
+
 
         }
 
@@ -392,6 +421,7 @@ namespace MarketExpress.Application.Services.Products
                 var img = await _imageService.UploadImageAsync(request.Image);
                 prod.Image = img.Value;
             }
+            
 
 
             if (request.Price.HasValue)
@@ -427,6 +457,14 @@ namespace MarketExpress.Application.Services.Products
              (!prod.DiscountStartDate.HasValue || !prod.DiscountEndDate.HasValue))
             {
                 return Result<ResponseUpdateProductDto>.BadRequest("يجب تضمين تاريخ بداية ونهاية الخصم");
+            }
+            if (!string.IsNullOrEmpty(request.Name))
+            {
+                prod.Name = request.Name;
+            }
+            if (!string.IsNullOrEmpty(request.Description))
+            {
+                prod.Description= request.Description;
             }
 
 

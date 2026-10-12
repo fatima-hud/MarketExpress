@@ -1,5 +1,6 @@
 ﻿using MarketExpress.Application.Dto.Product.Request;
 using MarketExpress.Application.Dto.Product.Response;
+using MarketExpress.Core.DtoHelping.Admin.Response;
 using MarketExpress.Core.Results;
 
 namespace MarketExpress.Application.Services.Products
@@ -14,6 +15,7 @@ namespace MarketExpress.Application.Services.Products
         Task<Result<ResponseProductDetailsDto>> GetProductAsync(int productId);
         Task<Result<List<ResponseGetDiscountProductByStoreDto>>> GetAllDiscountProductByStore(string userId);
         Task<Result<List<ResponseGetDiscountProductDto>>> GetAllDiscountProductByAllStores();
+        Task<Result<ResponseProductDashboardDto>> GetProductDashboardsAsync(string userId,int PageNumber, int PageSize);
 
 
 

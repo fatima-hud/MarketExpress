@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Application.Dto.PostMedia.Response;
+using MarketExpress.Application.Dto.PostReaction.Response;
 using MarketExpress.Core.Enums;
 using System;
 using System.Collections.Generic;
@@ -18,5 +19,7 @@ namespace MarketExpress.Application.Dto.Post.Response
         public enPostVisibility Visibility { get; set; }
         public bool IsDeleted { get; set; }
         public List<ResponseGetPostMediaDto> PostMedias { get; set; }
+        public enReactionType? MyReaction { get; set; }   
+        public List <ResponseGetReactionSummaryDto> PostReactions { get; set; }
     }
 }

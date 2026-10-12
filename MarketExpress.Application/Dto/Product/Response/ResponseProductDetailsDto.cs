@@ -23,6 +23,7 @@ namespace MarketExpress.Application.Dto.Product.Response
         public DateTime? DiscountEndDate { get; set; }
         public decimal? PriceAfterDiscount { get; set; }
 
+
         public string Image { get; set; }
         public List<ResponseGetAllSizeDto>? Sizes { get; set; }
 

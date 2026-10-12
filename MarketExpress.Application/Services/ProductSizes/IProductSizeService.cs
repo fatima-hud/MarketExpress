@@ -8,5 +8,6 @@ namespace MarketExpress.Application.Services.ProductSizes
     {
         Task<Result<List<ResponseGetProductSizeDto>>> AddAsync(string userId, int ProductColorId, List<RequestProductSizeDto> request);
         Task<Result<ResponseGetProductSizeDto>> UpdateQuantityAsync(string userId, int productSize, RequestUpdateProductSizeDto request);
+        Task<Result> DeleteProductSizeAsync(string userId, int productSizeId);
     }
 }

@@ -9,18 +9,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
-
+using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGenJwtAuth();
 
+builder.Host.UseSerilog((context,configuration)=>
+configuration.ReadFrom.Configuration(context.Configuration));
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://fashion-one-xi.vercel.app") //  „ «· ⁄œÌ· · Ã‰» „‘«ﬂ· «·‹ CORS √À‰«¡ «· Ã—»… ⁄·Ï «·”Ì—›—
+        policy.WithOrigins("https://fashion-one-xi.vercel.app",
+            "http://localhost:5173") //  „ «· ⁄œÌ· · Ã‰» „‘«ﬂ· «·‹ CORS √À‰«¡ «· Ã—»… ⁄·Ï «·”Ì—›—
               .AllowAnyHeader()
               .AllowAnyMethod()
                .AllowCredentials();
@@ -66,11 +69,13 @@ builder.Services.AddSignalR();
 var app = builder.Build();
 
 // 1. [ ⁄œÌ· „Â„]: ≈Ìﬁ«› «· ÕÊÌ· «· ·ﬁ«∆Ì ·‹ HTTPS ·√‰ Somee «·„Ã«‰Ì ·« Ìœ⁄„Â
-if (!app.Environment.IsProduction())
+/*if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
-}
-
+}*/
+app.UseSerilogRequestLogging();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("Application started successfully");
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseRouting();

@@ -19,7 +19,7 @@ namespace MarketExpress.Infrastructure.Repositories
         }
     public async Task<Document> GetStoreDocumentByNationalIdBackImageAsync(int storeId)
         {
-            var res = await _dbContext.Documents.FirstOrDefaultAsync(e => e.StoreId==storeId && e.FileType == enFileDocumentType.NationalIdFrontImage );
+            var res = await _dbContext.Documents.FirstOrDefaultAsync(e => e.StoreId==storeId && e.FileType == enFileDocumentType.NationalIdBackImage );
             return res;
         }
 
@@ -27,7 +27,7 @@ namespace MarketExpress.Infrastructure.Repositories
 
         public async Task<Document> GetStoreDocumentByNationalIdFrontImageAsync(int storeId)
         {
-            var res = await _dbContext.Documents.FirstOrDefaultAsync(e => e.StoreId == storeId && e.FileType == enFileDocumentType.NationalIdBackImage );
+            var res = await _dbContext.Documents.FirstOrDefaultAsync(e => e.StoreId == storeId && e.FileType == enFileDocumentType.NationalIdFrontImage );
             return res;
         }
 

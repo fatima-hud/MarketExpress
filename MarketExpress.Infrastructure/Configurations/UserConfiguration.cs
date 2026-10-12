@@ -18,11 +18,12 @@ namespace MarketExpress.Infrastructure.Configurations
             builder.Property(x => x.Gender).HasConversion<string>();
             builder.Property(x => x.LastName).HasMaxLength(50);
             builder.Property(e => e.PhoneNumber).HasMaxLength(10);
-      /*     builder
-    .HasOne(u => u.Store)
-    .WithMany(s => s.Employees)
-    .HasForeignKey(u => u.StoreId)
-    .OnDelete(DeleteBehavior.Restrict); */
+           
+            /*     builder
+          .HasOne(u => u.Store)
+          .WithMany(s => s.Employees)
+          .HasForeignKey(u => u.StoreId)
+          .OnDelete(DeleteBehavior.Restrict); */
         }
 
        

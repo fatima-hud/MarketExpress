@@ -14,6 +14,7 @@ namespace MarketExpress.Core.Entity
         public enSize Size { get; set; }
         public int Quantity { get; set; }
         public bool IsFoundProduct => Quantity > 0;
+        public bool IsDeleted { get; set; }
         public ProductColor ProductColor { get; set; }
       public ICollection<CartItem> CartItems { get; set; }
 

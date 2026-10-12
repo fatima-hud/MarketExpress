@@ -59,7 +59,7 @@ namespace MarketExpress.Application.Services.StoreRequests
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
+                if (user == null || user.IsDeleted)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseRequestStoreDto>.NotFound("مستخدم غير موجود");
@@ -106,16 +106,8 @@ namespace MarketExpress.Application.Services.StoreRequests
                     await trans.RollbackAsync();
                     return Result<ResponseRequestStoreDto>.BadRequest("اسم المتجر مستخدم مسبقا");
                 }
-                if (request.Latitude < -90 || request.Latitude > 90)
-                {
-                    await trans.RollbackAsync();
-                    return Result<ResponseRequestStoreDto>.BadRequest("خطوط العرض غير صحيحة");
-                }
-                if (request.Longitude < -180 || request.Longitude > 180)
-                {
-                    await trans.RollbackAsync();
-                    return Result<ResponseRequestStoreDto>.BadRequest("خطوط الطول غير صحيحة");
-                }
+         
+       
                 if (request.WorkingHoursEnd <= request.WorkingHoursStart)
                 {
                     await trans.RollbackAsync();
@@ -185,8 +177,8 @@ namespace MarketExpress.Application.Services.StoreRequests
                     StoreName = request.StoreName.Trim(),
                     Description = request.Description.Trim(),
                     Address = request.Address.Trim(),
-                    Latitude = request.Latitude,
-                    Longitude = request.Longitude,
+                 //   Latitude = request.Latitude,
+                 //   Longitude = request.Longitude,
                     WorkingHoursStart = request.WorkingHoursStart,
                     WorkingHoursEnd = request.WorkingHoursEnd,
                     StoreStatus = enStoreStatus.Pending,
@@ -317,8 +309,8 @@ namespace MarketExpress.Application.Services.StoreRequests
                 Address = e.Address,
                 StoreStatus = e.StoreStatus,
                 Description = e.Description,
-                Longitude = e.Longitude,
-                Latitude = e.Latitude,
+              //  Longitude = e.Longitude,
+               // Latitude = e.Latitude,
                 WorkingHoursStart = e.WorkingHoursStart,
                 WorkingHoursEnd = e.WorkingHoursEnd,
                 CreatedAt = e.CreatedAt,
@@ -350,7 +342,7 @@ namespace MarketExpress.Application.Services.StoreRequests
                 return Result<ResponseGetFilesByStoreDto>.NotFound("متجر غير موجود ");
             }
             var currentUser = await _userManager.FindByIdAsync(userId);
-            if (currentUser is null)
+            if (currentUser is null || currentUser.IsDeleted)
             {
                 return Result<ResponseGetFilesByStoreDto>.NotFound("مالك المتجر غير موجود");
             }
@@ -401,8 +393,8 @@ namespace MarketExpress.Application.Services.StoreRequests
                 Address = e.Address,
                 StoreStatus = e.StoreStatus,
                 Description = e.Description,
-                Longitude = e.Longitude,
-                Latitude = e.Latitude,
+               // Longitude = e.Longitude,
+               // Latitude = e.Latitude,
                 WorkingHoursStart = e.WorkingHoursStart,
                 WorkingHoursEnd = e.WorkingHoursEnd,
                 CreatedAt = e.CreatedAt,

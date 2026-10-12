@@ -20,9 +20,9 @@ namespace MarketExpress.Application.Dto.RequestStore.Response
 
        
      
-        public decimal Latitude { get; set; }
+     //   public decimal Latitude { get; set; }
       
-        public decimal Longitude { get; set; }
+      //  public decimal Longitude { get; set; }
       
         public TimeSpan WorkingHoursStart { get; set; }
         

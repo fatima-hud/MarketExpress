@@ -1,21 +1,31 @@
-# Visual Studio temporary files
+# Visual Studio
 .vs/
 bin/
 obj/
 *.user
 *.suo
-*.log
 *.pdb
 *.cache
 
 # Rider
 .idea/
 
-# NuGet packages
+# NuGet
 *.nupkg
 *.snupkg
 packages/
 
-# ASP.NET Core
-appsettings.Development.json
-wwwroot/lib/
+# ASP.NET Core configuration
+**/appsettings*.json
+!**/appsettings.example.json
+
+# Uploaded files
+**/wwwroot/uploads/**
+
+# Logs
+**/Logs/
+**/logs/
+*.log
+
+# Publish profiles
+**/Properties/PublishProfiles/*.pubxml

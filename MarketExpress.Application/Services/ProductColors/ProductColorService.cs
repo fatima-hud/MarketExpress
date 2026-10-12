@@ -26,8 +26,9 @@ namespace MarketExpress.Application.Services.ProductColors
         private readonly UserManager<User> _userManager;
         private readonly  IImageService _imageService;
         private readonly IProductSizeRepository _productSizeRepository;
+        private readonly IUserRepository _userRepository;
 
-        public ProductColorService(IProductRepository repository, IProductColorRepository clothingItemRepository, IStoreRepository storeRepository,UserManager<User>userManager,IImageService imageService,IProductSizeRepository productSizeRepository)
+        public ProductColorService(IProductRepository repository, IProductColorRepository clothingItemRepository, IStoreRepository storeRepository,UserManager<User>userManager,IImageService imageService,IProductSizeRepository productSizeRepository,IUserRepository userRepository)
         {
             _productRepository = repository;
             _productColorRepository = clothingItemRepository;
@@ -35,6 +36,7 @@ namespace MarketExpress.Application.Services.ProductColors
             _userManager = userManager;
             _imageService = imageService;
             _productSizeRepository = productSizeRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<Result<ResponseClothingItemDto>> AddAsync(string userId, int productId, RequestAddClothingItemDto request)
@@ -55,17 +57,24 @@ namespace MarketExpress.Application.Services.ProductColors
                 }
 
                 var store = await _storeRepository.GetByIdAsync(product.StoreId);
-                if (store == null)
+                if (store == null )
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseClothingItemDto>.NotFound("المتجر غير موجود");
                 }
                 var admin = store.OwnerId;
-                if (admin == null || admin != userId)
+                if (admin == null  || admin != userId)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseClothingItemDto>.BadRequest("المستخدم ليس صاحب المتجر");
                 }
+                var isAdminActive = await _userManager.FindByIdAsync(userId);
+                if (isAdminActive is not null && isAdminActive.IsDeleted)
+                {
+                    await trans.RollbackAsync();
+                    return Result<ResponseClothingItemDto>.BadRequest("المستخدم غير موجود");
+                }
+
                 if (string.IsNullOrWhiteSpace(request.Color))
                 {
                     await trans.RollbackAsync();
@@ -183,6 +192,12 @@ namespace MarketExpress.Application.Services.ProductColors
             {
                 return Result<ResponseClothingItemDto>.BadRequest("المستخدم ليس صاحب المتجر");
             }
+            var isAdminActive = await _userManager.FindByIdAsync(userId);
+            if (isAdminActive is not null && isAdminActive.IsDeleted)
+            {
+              
+                return Result<ResponseClothingItemDto>.BadRequest("المستخدم غير موجود");
+            }
             if (!string.IsNullOrEmpty(request.Color))
             {
                 var color = request.Color.ToLower().Trim();
@@ -197,6 +212,7 @@ namespace MarketExpress.Application.Services.ProductColors
                     return Result<ResponseClothingItemDto>.BadRequest("المنتج متوفر مسبقا");
 
                 }
+                productColor.Color=color;
 
 
               
@@ -246,6 +262,7 @@ namespace MarketExpress.Application.Services.ProductColors
             {
                 Id = e.Id,
                 Color = e.Color,
+                ColorHexCode=e.ColorHexCode,
                 Image = e.Image,
                 ProductSizes = e.ProductSizes.Select(ps=>new ResponseGetAllSizeDto { ProductSizeId=ps.Id,Size=ps.Size,IsFoundProduct=ps.IsFoundProduct}).ToList()
             
@@ -295,40 +312,71 @@ namespace MarketExpress.Application.Services.ProductColors
             return Result<List<ResponseSuggestProductDto>>.Success(sug);
         }
 
-        public async Task<Result<List<ResponseEmptyProductInventoryDto>>> GetAllEmptyProductInventoryAsync(string userId)
+        public async Task<Result<List<ResponseInventoryAlertDto>>> GetAllProductInventoryAlertAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
-                return Result<List<ResponseEmptyProductInventoryDto>>.NotFound("المستخدم غير موجود");
+                return Result<List<ResponseInventoryAlertDto>>.NotFound("المستخدم غير موجود");
             }
             if (user.IsBanned)
             {
 
-                return Result<List<ResponseEmptyProductInventoryDto>>.BadRequest("المستخدم محظور");
+                return Result<List<ResponseInventoryAlertDto>>.BadRequest("المستخدم محظور");
             }
             var store=await _storeRepository.GetStoreByAdminAsync(userId);
             if (store == null)
             {
-                return Result<List<ResponseEmptyProductInventoryDto>>.NotFound("المتجر غير موجود");
+                return Result<List<ResponseInventoryAlertDto>>.NotFound("المتجر غير موجود");
             }
-            var products = await _productColorRepository.GetEmptyProductInventoryAsync(store.Id);
-            var ret=new List<ResponseEmptyProductInventoryDto>();
-            if(products is null)
+            var products = await _productColorRepository.GetProductInventoryAlertAsync(store.Id);
+            var ret=new List<ResponseInventoryAlertDto>();
+            if(!products.Any())
             {
-                return Result<List<ResponseEmptyProductInventoryDto>>.Success(ret);
+                return Result<List<ResponseInventoryAlertDto>>.Success(ret);
             }
-            ret = products.Select(x => new ResponseEmptyProductInventoryDto
+            ret = products.Select(x => new ResponseInventoryAlertDto
             {
                 Id = x.Id,
                 ProductId = x.ProductColor.ProductId,
                 Color = x.ProductColor.Color,
-                ColorHexCode = x.ProductColor.Color,
+                ColorHexCode = x.ProductColor.ColorHexCode,
                 Quantity = x.Quantity,
                 Size = x.Size,
             }
                 ).ToList();
-            return Result<List<ResponseEmptyProductInventoryDto>>.Success(ret);
+            return Result<List<ResponseInventoryAlertDto>>.Success(ret);
+        }
+
+        public  async Task<Result> DeleteProductColor(string userId, int productColorId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null || user.IsDeleted)
+            {
+                return Result.NotFound("المستخدم غير موجود");
+            }
+            if (user.IsBanned)
+            {
+
+                return Result.BadRequest("المستخدم محظور");
+            }
+            var store = await _storeRepository.GetStoreByAdminAsync(userId);
+            if (store == null)
+            {
+                return Result.NotFound("المتجر غير موجود");
+            }
+            var productColor = await _productColorRepository.GetProductColorWithProductAsync(productColorId);
+            if (productColor == null)
+            {
+                return Result.NotFound("اللون غير موجود");
+            }
+            if(productColor.Product.StoreId != store.Id)
+            {
+                return Result.BadRequest("المستخدم ليس صاحب المتجر");
+            }
+            productColor.IsDeleted = true;
+            await _productColorRepository.SaveChangesAsync();
+            return Result.Success("تم الحذف بنجاح");
         }
     }
 }

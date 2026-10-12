@@ -28,7 +28,7 @@ namespace MarketExpress.Application.Services.OrderItems
         public async Task<Result<List<ResponseOrderItemDto>>> GetOrderDetails(string userId, int orderId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<List<ResponseOrderItemDto>>.NotFound("مستخدم غير موجود");
             }
@@ -75,38 +75,38 @@ namespace MarketExpress.Application.Services.OrderItems
 
         }
 
-        public async Task<Result<List<ResponseProductInventoryDto>>> GetProductInventoryAsync(string userId, DateTime? startDate, DateTime? endDate)
+        public async Task<Result<List<ResponseGetOrderDetailesDto>> >GetProductInventoryAsync(string userId, DateTime? startDate, DateTime? endDate)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user is null || user.IsDeleted)
             {
-                return Result<List<ResponseProductInventoryDto>>.NotFound("مستخدم غير موجود");
+                return Result<List<ResponseGetOrderDetailesDto>>.NotFound("مستخدم غير موجود");
             }
             if (user.IsBanned)
             {
-                return Result<List<ResponseProductInventoryDto>>.BadRequest("مستخدم محظور");
+                return Result<List<ResponseGetOrderDetailesDto>>.BadRequest("مستخدم محظور");
             }
             var store = await _storeRepository.GetStoreByAdminAsync(userId);
             if (store == null)
             {
-                return Result<List<ResponseProductInventoryDto>>.NotFound("المتجر غير موجود");
+                return Result<List<ResponseGetOrderDetailesDto>>.NotFound("المتجر غير موجود");
             }
             if (!startDate.HasValue || !endDate.HasValue)
             {
-                return Result<List<ResponseProductInventoryDto>>
+                return Result<List<ResponseGetOrderDetailesDto>>
                     .BadRequest("تاريخ غير صالح");
             }
             if (startDate > endDate)
             {
-                return Result<List<ResponseProductInventoryDto>>.BadRequest("يجب ان يكون تاريخ بداية الجرد اصغر من تاريخ النهاية");
+                return Result<List<ResponseGetOrderDetailesDto>>.BadRequest("يجب ان يكون تاريخ بداية الجرد اصغر من تاريخ النهاية");
             }
             var res = await _orderItemRepository.GetProductInventoryAsync(store.Id, startDate.Value, endDate.Value);
             if (res == null)
             {
-                return Result<List<ResponseProductInventoryDto>>.NotFound("لا يوجد مبيعات في هذا المتجر خلال الفترة المحددة");
+                return Result<List<ResponseGetOrderDetailesDto>>.NotFound("لا يوجد مبيعات في هذا المتجر خلال الفترة المحددة");
 
             }
-            return Result<List<ResponseProductInventoryDto>>.Success(res);
+            return Result<List<ResponseGetOrderDetailesDto>>.Success(res);
         }
     }
 

@@ -15,6 +15,7 @@ namespace MarketExpress.Application.Dto.ClothingItem.Response
      
         public string Color { get; set; }
         public string Image {  get; set; }
+        public string ColorHexCode { get; set; }
         
       
         public List<ResponseGetAllSizeDto> ProductSizes { get; set; }

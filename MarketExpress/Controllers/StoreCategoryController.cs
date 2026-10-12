@@ -19,69 +19,97 @@ namespace MarketExpress.Controllers
     public class StoreCategoryController : ControllerBase
     {
         private readonly IStoreCategoryService _storeCategoryService;
+        private readonly ILogger<StoreCategoryController> _logger;
 
-        public StoreCategoryController(IStoreCategoryService storeCategoryService)
+        public StoreCategoryController(IStoreCategoryService storeCategoryService, ILogger<StoreCategoryController> logger)
         {
             _storeCategoryService = storeCategoryService;
+            _logger = logger;
         }
         [HttpPost]
         [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<ApiResult<ResponseGetStoreCategoryDto>> AddAsync(RequestAddStoreCategoryDto dto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetStoreCategoryDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseGetStoreCategoryDto>.BadRequest(errors);
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetStoreCategoryDto>.Unauthorized();
+                }
+                var res = await _storeCategoryService.AddAsync(userId, dto);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetStoreCategoryDto>.Created(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult<ResponseGetStoreCategoryDto>.Unauthorized();
+                _logger.LogError(ex, "Error occurred while add category to store");
+                return ApiResult<ResponseGetStoreCategoryDto>.InternalServerError("حدث خطا داخلي");
             }
-            var res = await _storeCategoryService.AddAsync(userId, dto);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseGetStoreCategoryDto>.Created(res.Value);
         }
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ApiResult<List<ResponseGetStoreCategoryDto>>> GetAllStoreCategoryByAdminAsync()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return ApiResult<List<ResponseGetStoreCategoryDto>>.Unauthorized();
-            }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<List<ResponseGetStoreCategoryDto>>.Unauthorized();
+                }
 
-            var res = await _storeCategoryService.GetAllStoreCategoryAsync(userId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
+                var res = await _storeCategoryService.GetAllStoreCategoryAsync(userId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<List<ResponseGetStoreCategoryDto>>.Ok(res.Value);
             }
-            return ApiResult<List<ResponseGetStoreCategoryDto>>.Ok(res.Value);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while get categories by store");
+                return ApiResult<List<ResponseGetStoreCategoryDto>>.InternalServerError("حدث خطا داخلي");
+            }
         }
       
         [Authorize(Roles = "SuperAdmin,Admin")]
         [HttpDelete("{storeCategoryId}")]
         public async Task<ApiResult> DeleteAsync( int storeCategoryId)
         {
-            if (!ModelState.IsValid) {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
-            }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return ApiResult.Unauthorized();
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult.Unauthorized();
+                }
+                var res = await _storeCategoryService.DeleteAsync(userId, storeCategoryId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult.Ok();
             }
-            var res = await _storeCategoryService.DeleteAsync(userId, storeCategoryId);
-            if (!res.IsSuccess)
+            catch(Exception ex)
             {
-                return this.ToApiResult(res);
+                _logger.LogError(ex, "Error occurred while delete category by store");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
+
             }
-            return ApiResult.Ok();
 
         }
     }

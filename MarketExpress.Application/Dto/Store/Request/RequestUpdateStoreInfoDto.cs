@@ -16,8 +16,8 @@ namespace MarketExpress.Application.Dto.Store.Request
         public string? StoreName { get; set; }
         public string? Description { get; set; } 
         public string? Address { get; set; }
-        public decimal? Latitude { get; set; }
-        public decimal? Longitude { get; set; } 
+       // public decimal? Latitude { get; set; }
+     //   public decimal? Longitude { get; set; } 
         public TimeSpan? WorkingHoursStart { get; set; }
 
         public TimeSpan? WorkingHoursEnd { get; set; }

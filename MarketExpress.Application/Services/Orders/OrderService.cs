@@ -32,7 +32,7 @@ namespace MarketExpress.Application.Services.Orders
         public async Task<Result<List<ResponseGetOrderDto>>> GetAllOrdersAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<List<ResponseGetOrderDto>>.NotFound("مستخدم غير موجود");
             }
@@ -72,7 +72,7 @@ namespace MarketExpress.Application.Services.Orders
                 return Result<ResponseGetOrderDto>.NotFound("طلب غير موجود");
             }
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<ResponseGetOrderDto>.NotFound("مستخدم غير موجود");
 
@@ -81,10 +81,13 @@ namespace MarketExpress.Application.Services.Orders
             {
                 return Result<ResponseGetOrderDto>.BadRequest("مستخدم محظور");
             }
-            var superAdminRole = await _userManager.GetRolesAsync(user);
-            var isSuperAdmin = superAdminRole.Contains("SuperAdmin");
+            if (dto is null)
+            {
+                return Result<ResponseGetOrderDto>.BadRequest("بيانات الطلب غير صحيحة");
+            }
+            var isSuperAdmin = await _userManager.IsInRoleAsync(user, "SuperAdmin");
 
-            if (userId != order.UserId && !isSuperAdmin)
+            if ( !isSuperAdmin)
             {
                 return Result<ResponseGetOrderDto>.BadRequest("المستخدم غير مصرح له الوصول للطلب");
             }
@@ -92,14 +95,14 @@ namespace MarketExpress.Application.Services.Orders
             {
                 return Result<ResponseGetOrderDto>.BadRequest($"لا يمكن تعديل الطلب لأنه في حالة {order.Status} بالفعل.");
             }
-            if (userId == order.UserId && dto.status != enOrderStatus.Cancelled)
+          /*  if (userId == order.UserId && dto.status != enOrderStatus.Cancelled)
             {
                 return Result<ResponseGetOrderDto>.BadRequest("لا يُسمح للمستخدم بتعديل حالة الطلب إلا للإلغاء فقط ");
+            }*/
+            if (dto.status != enOrderStatus.Delivered)
+            {
+                return Result<ResponseGetOrderDto>.BadRequest("يمكن للمسؤول العام تغيير حالة الطلب فقط الى تم التوصيل ");
             }
-            /*  if(isSuperAdmin&&dto.status!=enOrderStatus.Rejected)
-              {
-                  return Result<ResponseGetOrderDto>.BadRequest("يمكن للمسؤول العام تغيير حالة الطلب إلى مرفوض فقط.");
-              }*/
 
             var aes = new AesEncryptionService();
             order.Status = dto.status;

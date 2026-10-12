@@ -17,54 +17,71 @@ namespace MarketExpress.Controllers
     public class RatingController : ControllerBase
     {
         private readonly IRatingService _ratingService;
-
-        public RatingController(IRatingService ratingService)
+        private readonly ILogger<RatingController> _logger;
+        public RatingController(IRatingService ratingService, ILogger<RatingController> logger)
         {
             _ratingService = ratingService;
+            _logger = logger;
         }
         [Authorize]
         [HttpPost]
         public async Task<ApiResult<ResponseRatingDto>> AddRating([FromBody] RequestRatingDto dto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseRatingDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseRatingDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseRatingDto>.Unauthorized();
+                }
+                var res = await _ratingService.AddRatingAsync(userId, dto);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseRatingDto>.Created(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch (Exception ex)
             {
-                return ApiResult<ResponseRatingDto>.Unauthorized();
+                _logger.LogError(ex, "Error occured while add rating");
+                return ApiResult<ResponseRatingDto>.InternalServerError("حدث خطا داخلي");
             }
-            var res = await _ratingService.AddRatingAsync(userId, dto);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseRatingDto>.Created(res.Value);
         }
         [Authorize]
         [HttpGet]
        public async  Task<ApiResult<int>> GetProductRatingByUserAsync(int productId)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<int>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<int>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<int>.Unauthorized();
+                }
+                var res = await _ratingService.GetProductRatingByUserAsync(userId, productId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<int>.Created(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult<int>.Unauthorized();
+                _logger.LogError(ex, "Error occured while get product rating by user");
+                return ApiResult<int>.InternalServerError("حدث خطا داخلي");
             }
-            var res = await _ratingService.GetProductRatingByUserAsync(userId, productId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<int>.Created(res.Value);
         }
 
 

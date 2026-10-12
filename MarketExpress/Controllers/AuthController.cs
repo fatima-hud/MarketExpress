@@ -28,33 +28,42 @@ namespace MarketExpress.Controllers
         private readonly IEmailService _emailService;
         private readonly IImageService _imageService;
         private readonly IOtpCodeService _otpCodeService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService, UserManager<User> userManager, IEmailService emailService, IImageService imageService, IOtpCodeService otpCodeService)
+        public AuthController(IAuthService authService, UserManager<User> userManager, IEmailService emailService, IImageService imageService, IOtpCodeService otpCodeService, ILogger<AuthController> logger)
         {
             _authService = authService;
             _userManager = userManager;
             _emailService = emailService;
             _imageService = imageService;
             _otpCodeService = otpCodeService;
-
+            _logger = logger;
         }
 
         [HttpPost("Register")]
         public async Task<ApiResult> Register([FromBody] AddUserRequest request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var addNewUser = await _authService.RegisterAsync(request);
+                if (!addNewUser.IsSuccess)
+                {
+                    return this.ToApiResult(addNewUser);
+                }
+
+                return ApiResult.Created();
             }
-            var addNewUser = await _authService.RegisterAsync(request);
-            if (!addNewUser.IsSuccess)
+            catch(Exception ex)
             {
-                return this.ToApiResult(addNewUser);
+                _logger.LogError(ex, "Erroe register");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
             }
-
-            return ApiResult.Created();
 
 
         }
@@ -62,19 +71,27 @@ namespace MarketExpress.Controllers
         [HttpPost("Login")]
         public async Task<ApiResult<LogInResponse>> Login([FromBody] LoginRequest dto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<LogInResponse>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<LogInResponse>.BadRequest(errors);
 
-            }
-            var log = await _authService.LoginInAsync(dto);
-            if (!log.IsSuccess)
-            {
+                }
+                var log = await _authService.LoginInAsync(dto);
+                if (!log.IsSuccess)
+                {
+                    return this.ToApiResult(log);
+                }
+
                 return this.ToApiResult(log);
             }
-
-            return this.ToApiResult(log);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error login");
+                return ApiResult<LogInResponse>.InternalServerError("حدث خطا داخلي");
+            }
 
 
 
@@ -85,35 +102,51 @@ namespace MarketExpress.Controllers
         [HttpPost("ConfirmEmail")]
         public async Task<ApiResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
         {
-
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
 
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
+
+                }
+                var result = await _otpCodeService.ConfirmEmailAsync(request);
+                if (result.IsSuccess)
+                    return ApiResult.Ok("تم تأكيد الايميل بنجاح");
+                else
+                    return this.ToApiResult(result);
             }
-            var result = await _otpCodeService.ConfirmEmailAsync(request);
-            if (result.IsSuccess)
-                return ApiResult.Ok("Email confirmed successfully!");
-            else
-                return this.ToApiResult(result);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error confirm email");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
+            }
 
         }
         [HttpPost("ResendOtpCode")]
         public async Task<ApiResult> ResendOtpCode([FromBody] ResendOtpRequest request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var result = await _otpCodeService.ResendOtpCodeAsync(request);
+
+                if (result.IsSuccess)
+                    return ApiResult.Ok("successfully!");
+                else
+                    return this.ToApiResult(result);
             }
-            var result = await _otpCodeService.ResendOtpCodeAsync(request);
-
-            if (result.IsSuccess)
-                return ApiResult.Ok("successfully!");
-            else
-                return this.ToApiResult(result);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error resend otp code");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
+            }
 
         }
 
@@ -126,27 +159,35 @@ namespace MarketExpress.Controllers
 
 
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<AuthResponse>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<AuthResponse>.BadRequest(errors);
 
+                }
+                var result = await _authService.RefreshAccessTokenAsync(request);
+
+
+
+                if (!result.IsSuccess)
+                {
+                    return this.ToApiResult(Result<AuthResponse>.Failure(result.Message, result.Errors, result.FailureType));
+                }
+                var response = new AuthResponse
+                {
+                    AccessToken = result.Value!.AccessToken,
+                    RefreshToken = result.Value.RefreshToken.RefreshTokenString,
+                    ExpiresIn = result.Value.RefreshToken.ExpireIn
+                };
+                return ApiResult<AuthResponse>.Ok(response);
             }
-            var result = await _authService.RefreshAccessTokenAsync(request);
-
-
-
-            if (!result.IsSuccess)
+            catch(Exception ex)
             {
-                return this.ToApiResult(Result<AuthResponse>.Failure(result.Message, result.Errors, result.FailureType));
+                _logger.LogError(ex, "Error refresh token");
+                return ApiResult<AuthResponse>.InternalServerError("حدث خطا داخلي");
             }
-            var response = new AuthResponse
-            {
-                AccessToken = result.Value!.AccessToken,
-                RefreshToken = result.Value.RefreshToken.RefreshTokenString,
-                ExpiresIn = result.Value.RefreshToken.ExpireIn
-            };
-            return ApiResult<AuthResponse>.Ok(response);
         }
 
 
@@ -154,45 +195,69 @@ namespace MarketExpress.Controllers
         [Authorize]
         public async Task<ApiResult> Logout([FromBody] LogoutRequest request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult.Unauthorized();
+                }
+                var result = await _authService.LogoutAsync(userId, request);
+                return this.ToApiResult(result);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult.Unauthorized();
+                _logger.LogError(ex, "Error logout");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
             }
-            var result = await _authService.LogoutAsync(userId, request);
-            return this.ToApiResult(result);
         }
 
 
         [HttpPost("ForgotPassword")]
         public async Task<ApiResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var result = await _authService.ForgotPasswordAsync(request);
+                return this.ToApiResult(result);
             }
-            var result = await _authService.ForgotPasswordAsync(request);
-            return this.ToApiResult(result);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error forgot password");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
+            }
         }
         [HttpPost("ResetPassword")]
         public async Task<ApiResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var result = await _authService.ResetPasswordAsync(request);
+                return this.ToApiResult(result);
             }
-            var result = await _authService.ResetPasswordAsync(request);
-            return this.ToApiResult(result);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error reset password");
+                return ApiResult.InternalServerError("حدث خطا داخلي");
+            }
         }
     }
 }

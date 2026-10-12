@@ -24,7 +24,7 @@ namespace MarketExpress.Application.Services.Comments
         public async Task<Result<ResponseAddCommentDto>> AddAsync(string userId, RequestAddCommentDto request)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseAddCommentDto>.NotFound("المستخدم غير موجود");
             }
@@ -69,7 +69,7 @@ namespace MarketExpress.Application.Services.Comments
         public async Task<Result> DeleteAsync(string userId, int commentId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result.NotFound("مستخدم غير موجود");
             }
@@ -133,7 +133,7 @@ namespace MarketExpress.Application.Services.Comments
         public async Task<Result<ResponseAddCommentDto>> UpdateAsync(string userId, RequestUpdateCommentDto request)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted )
             {
                 return Result<ResponseAddCommentDto>.NotFound("مستخدم غير موجود");
             }

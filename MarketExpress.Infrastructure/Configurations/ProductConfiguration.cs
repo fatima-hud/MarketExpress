@@ -22,12 +22,12 @@ namespace MarketExpress.Infrastructure.Configurations
             builder.Property(p => p.Price).HasColumnType("decimal(18,2)").IsRequired();
             builder.Property(e => e.Type).HasConversion<string>();
             builder.Property(p => p.Gender).HasConversion<string>();
-            builder.HasQueryFilter(e => !e.IsDeleted);
+            builder.HasQueryFilter(p => !p.IsDeleted && p.Store.IsActive);
             builder.Property(p => p.Season).HasConversion<string>();
             builder.HasMany(e => e.Ratings).WithOne(e => e.Product).HasForeignKey(e => e.ProductId).OnDelete(DeleteBehavior.Restrict);
             builder.HasMany(e=>e.ProductColors).WithOne(e => e.Product).HasForeignKey(e => e.ProductId).OnDelete(DeleteBehavior.Cascade);
-            
-
+          
+           
 
 
             builder.ToTable(t => {

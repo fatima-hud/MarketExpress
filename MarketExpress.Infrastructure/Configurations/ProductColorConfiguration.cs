@@ -14,7 +14,7 @@ namespace MarketExpress.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<ProductColor> builder)
         {
           
-           
+           builder.HasQueryFilter(builder => !builder.IsDeleted);
         }
     }
 }

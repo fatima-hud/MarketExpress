@@ -18,29 +18,34 @@ namespace MarketExpress.Infrastructure.Repositories
         {
         }
 
+       
         public async Task<bool> AddCodeAsync(string userId, string code)
         {
+            var user = await _dbContext.Users.FindAsync(userId);
+
+            if (user == null)
+                return false;
+
+            var now = DateTime.UtcNow;
+            var expiry = now.AddMinutes(5);
+
             var otp = new OtpCode
             {
                 UserId = userId,
-                CreatedAt = DateTime.UtcNow,
-                Code = code,
-         
+                CreatedAt = now,
+                Expiry = expiry,
+                Code = code
             };
-            var res = await _dbContext.Set<OtpCode>().AddAsync(otp);
-            await _dbContext.SaveChangesAsync();
-            otp.Expiry = otp.CreatedAt.AddMinutes(5);
-            var user=await _dbContext.Users.FindAsync(userId);
+
+            await _dbContext.Set<OtpCode>().AddAsync(otp);
+
             user.ResetPasswordCode = code;
-            user.ResetPasswordCodeExpiry = otp.Expiry;
+            user.ResetPasswordCodeExpiry = expiry;
 
-
-            
             await _dbContext.SaveChangesAsync();
-            if (res != null) return true;
-            return false;
-        }
 
+            return true;
+        }
         public  async Task<List<OtpCode>> GetAllCodesByUserId(string userId)
         { 
             var res=await _dbContext.OtpCodes.Where(e=>e.UserId == userId).ToListAsync();

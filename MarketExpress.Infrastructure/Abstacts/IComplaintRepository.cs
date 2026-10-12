@@ -1,4 +1,5 @@
-﻿using MarketExpress.Core.Entity;
+﻿using MarketExpress.Core.DtoHelping.Complaint;
+using MarketExpress.Core.Entity;
 using MarketExpress.Infrastructure.InfrastructureBases;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,8 @@ namespace MarketExpress.Infrastructure.Abstacts
 {
    public interface IComplaintRepository:IGenericRepositoryAsync<Complaint>
     {
-        Task<List<Complaint>> GetAllComplaintByUserIdAsync(string userId);
+        Task<List<Complaint>> GetAllComplaintByAdminAsync(string adminId);
         Task<Complaint>GetComplaintAsync(string userId,string storeOwnerId);
+        Task<List<ResponseGetComplaintByUserDto>> GetAllComplaintByUserAsync(string userId);
     }
 }

@@ -16,64 +16,72 @@ namespace MarketExpress.Application.Services.Emails
         public EmailService(IOptions<EmailSettings> options)
 
         {
-          
+
             _emailSettings = options.Value;
 
         }
 
 
-        public async Task<bool> SendEmailAsync(string Email, string subject, string htmlMessage)
+        public async Task<bool> SendEmailAsync(
+        string emailAddress,
+        string subject,
+        string htmlMessage)
         {
-           
             try
             {
-
                 var email = new MimeMessage();
-                email.Sender = MailboxAddress.Parse(_emailSettings.Email);
-                email.From.Add(new MailboxAddress("MarketExpress App", _emailSettings.Email));
-                email.To.Add(MailboxAddress.Parse(Email));
-                email.Subject = subject;
 
+                email.Sender = MailboxAddress.Parse(_emailSettings.Email);
+                email.From.Add(
+                    new MailboxAddress("موضة", _emailSettings.Email));
+
+                email.To.Add(MailboxAddress.Parse(emailAddress));
+                email.Subject = subject;
 
                 var builder = new BodyBuilder
                 {
-                    HtmlBody = htmlMessage // Set HTML content
+                    HtmlBody = htmlMessage
                 };
-                email.Body = builder.ToMessageBody();
 
+                email.Body = builder.ToMessageBody();
                 email.Body.ContentType.Charset = "UTF-8";
 
-                // Create an SmtpClient using MailKit and connect to SMTP server
-                Console.WriteLine("SMTP CONNECT START");
-                using (var smtp = new SmtpClient())
-                {
-                    smtp.Timeout = 10000;
-                    // Connect to the SMTP server using the settings
-                    await smtp.ConnectAsync(_emailSettings.Host, _emailSettings.Port, SecureSocketOptions.SslOnConnect);
-                    //  await smtp.ConnectAsync(_emailSettings.Host,_emailSettings.Port,SecureSocketOptions.StartTls );
+                using var smtp = new SmtpClient();
 
-                    // Authenticate using the email credentials
-                    await smtp.AuthenticateAsync(_emailSettings.Email, _emailSettings.Password);
-                    // تعيين وقت الانتظار بالمللي ثانية (10 ثوانٍ)
+                smtp.Timeout = 10000;
 
-                    // Send the email
-                    await smtp.SendAsync(email);
+               
 
-                    // Disconnect after sending the email
-                    await smtp.DisconnectAsync(true);
-                }
-                Console.WriteLine("SMTP CONNECT End");
+                await smtp.ConnectAsync(
+                    _emailSettings.Host,
+                    _emailSettings.Port,
+                    SecureSocketOptions.SslOnConnect);
+
+            
+
+                await smtp.AuthenticateAsync(
+                    _emailSettings.Email,
+                    _emailSettings.Password);
+
+               
+
+                await smtp.SendAsync(email);
+               
+
+                await smtp.DisconnectAsync(true);
+
+              
+
                 return true;
             }
             catch (Exception ex)
             {
-            
+                Console.WriteLine("========== SMTP ERROR ==========");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("================================");
 
                 return false;
             }
         }
-
     }
-
 }
-

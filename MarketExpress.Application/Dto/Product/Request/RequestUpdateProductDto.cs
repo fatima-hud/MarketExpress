@@ -20,6 +20,8 @@ namespace MarketExpress.Application.Dto.Product.Request
         public IFormFile ?Image { get; set; }
         public DateTime? DiscountStartDate { get; set; }
         public DateTime ?DiscountEndDate { get; set; }
+        public string? Name {  get; set; }
+        public string? Description {  get; set; }
       
         
        

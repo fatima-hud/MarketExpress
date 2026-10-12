@@ -21,7 +21,7 @@ namespace MarketExpress.Application.Services.Wallets
         public async Task<Result<ResponseGetWalletDto>> AddWalletAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseGetWalletDto>.NotFound("مستخدم غير موجود");
             }
@@ -65,7 +65,7 @@ namespace MarketExpress.Application.Services.Wallets
         public async Task<Result<ResponseGetWalletDto>> GetWalletAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseGetWalletDto>.NotFound("مستخدم غير موجود");
             }

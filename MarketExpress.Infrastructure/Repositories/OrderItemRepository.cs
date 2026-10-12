@@ -21,7 +21,7 @@ namespace MarketExpress.Infrastructure.Repositories
 
         public async Task<List<OrderItem>> GetOrderItemsAsync(int orderId)
         {
-            var items= await _dbContext.Orderitems.Include(e=>e.product).ThenInclude(e=>e.ProductColors).Where(e=>e.OrderId==orderId).ToListAsync();
+            var items= await _dbContext.Orderitems.Include(e=>e.product).ThenInclude(e=>e.ProductColors).IgnoreQueryFilters().Where(e=>e.OrderId==orderId).ToListAsync();
             return items;
         }
 
@@ -35,26 +35,28 @@ namespace MarketExpress.Infrastructure.Repositories
 
             return res;
         }
-        public async Task<List<ResponseProductInventoryDto>> GetProductInventoryAsync(
+        public async Task<List<ResponseGetOrderDetailesDto>> GetProductInventoryAsync(
     int storeId,
     DateTime startDate,
     DateTime endDate)
         {
-            return await _dbContext.Orderitems
-                .Where(x =>
-                    x.product.StoreId == storeId &&
-                    x.order.CreatedAt >= startDate &&
-                    x.order.CreatedAt <= endDate &&
-                    x.order.Status == enOrderStatus.Delivered)
+           
+            return await _dbContext.Orderitems.IgnoreQueryFilters()
+               .Where(x =>
+    x.product.StoreId == storeId &&
+    x.order.CreatedAt >= startDate.Date &&
+    x.order.CreatedAt < endDate.Date.AddDays(1) &&
+    x.order.Status == enOrderStatus.Delivered)
                 .GroupBy(x => new
                 {
                     x.ProductId,
                     x.Color,
                     x.Size
                 })
-                .Select(g => new ResponseProductInventoryDto
+                .Select(g => new ResponseGetOrderDetailesDto
                 {
                     ProductId = g.Key.ProductId,
+                    Image = g.Select(x => x.product.Image).FirstOrDefault(),
 
                     Color = g.Key.Color,
 

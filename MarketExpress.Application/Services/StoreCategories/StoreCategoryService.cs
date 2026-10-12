@@ -27,7 +27,7 @@ namespace MarketExpress.Application.Services.StoreCategories
         public async Task<Result<ResponseGetStoreCategoryDto>> AddAsync(string userId, RequestAddStoreCategoryDto request)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseGetStoreCategoryDto>.NotFound("مستخدم غير موجود");
             }
@@ -84,7 +84,7 @@ namespace MarketExpress.Application.Services.StoreCategories
         public async Task<Result> DeleteAsync(string userId, int storeCategoryId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result.NotFound("مستخدم غير موجود");
             }
@@ -119,7 +119,7 @@ namespace MarketExpress.Application.Services.StoreCategories
         public async Task<Result<List<ResponseGetStoreCategoryDto>>> GetAllStoreCategoryAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<List<ResponseGetStoreCategoryDto>>.NotFound("مستخدم غير موجود");
             }

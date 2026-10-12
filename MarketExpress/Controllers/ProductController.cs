@@ -20,195 +20,242 @@ namespace MarketExpress.Controllers
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
         private readonly IImageService _imageService;
+        private readonly ILogger<ProductController> _logger;
 
-        public ProductController(IProductService productService, ICategoryService categoryService, IImageService imageService)
+
+        public ProductController(IProductService productService, ICategoryService categoryService, IImageService imageService, ILogger<ProductController> logger)
         {
             _productService = productService;
             _categoryService = categoryService;
             _imageService = imageService;
+            _logger = logger;
         }
-/*
-        [HttpGet]
-        public async Task<ApiResult<List<ResponseProductDto>>> SearchProducts([FromQuery] string query)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+        /*
+                [HttpGet]
+                public async Task<ApiResult<List<ResponseProductDto>>> SearchProducts([FromQuery] string query)
+                {
+                    if (!ModelState.IsValid)
+                    {
+                        var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
 
 
 
-                return ApiResult<List<ResponseProductDto>>.BadRequest(errors);
-            }
-            var prod = await _productService.SearchAsync(query);
-            if (!prod.IsSuccess)
-            {
-                return this.ToApiResult(prod);
-            }
-            return ApiResult<List<ResponseProductDto>>.Ok(prod.Value, "Successful");
+                        return ApiResult<List<ResponseProductDto>>.BadRequest(errors);
+                    }
+                    var prod = await _productService.SearchAsync(query);
+                    if (!prod.IsSuccess)
+                    {
+                        return this.ToApiResult(prod);
+                    }
+                    return ApiResult<List<ResponseProductDto>>.Ok(prod.Value, "Successful");
 
-        }
-        [HttpGet]
-        public async Task<ApiResult<List<ResponseProductDto>>> FilterAsync(FilterDto dto)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<List<ResponseProductDto>>.BadRequest(errors);
-            }
-            var products = await _productService.FilterAsync(dto);
-            if (!products.IsSuccess)
-            {
-                return this.ToApiResult(products);
-            }
-            return ApiResult<List<ResponseProductDto>>.Ok(products.Value, "Successful");
+                }
+                [HttpGet]
+                public async Task<ApiResult<List<ResponseProductDto>>> FilterAsync(FilterDto dto)
+                {
+                    if (!ModelState.IsValid)
+                    {
+                        var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                        return ApiResult<List<ResponseProductDto>>.BadRequest(errors);
+                    }
+                    var products = await _productService.FilterAsync(dto);
+                    if (!products.IsSuccess)
+                    {
+                        return this.ToApiResult(products);
+                    }
+                    return ApiResult<List<ResponseProductDto>>.Ok(products.Value, "Successful");
 
-        }
-*/
+                }
+        */
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ApiResult<ResponseProductDetailsDto>> AddProduct([FromForm] RequestAddProductDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseProductDetailsDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseProductDetailsDto>.BadRequest(errors);
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseProductDetailsDto>.Unauthorized();
+                }
+                var res = await _productService.AddAsync(userId, request);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseProductDetailsDto>.Created(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch (Exception ex)
             {
-                return ApiResult<ResponseProductDetailsDto>.Unauthorized();
+                _logger.LogError(ex, "Error occurred while adding a product");
+                return ApiResult<ResponseProductDetailsDto>.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _productService.AddAsync(userId, request);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseProductDetailsDto>.Created(res.Value);
         }
         [Authorize(Roles = "Admin")]
         [HttpPut("{productId}")]
         public async Task<ApiResult<ResponseUpdateProductDto>> UpdateProduct([FromRoute] int productId, [FromForm] RequestUpdateProductDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseUpdateProductDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseUpdateProductDto>.BadRequest(errors);
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseUpdateProductDto>.Unauthorized();
+                }
+                var res = await _productService.UpdateAsync(userId, request, productId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseUpdateProductDto>.Ok(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult<ResponseUpdateProductDto>.Unauthorized();
+                _logger.LogError(ex, "Error occurred while updating a product");
+                return ApiResult<ResponseUpdateProductDto>.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _productService.UpdateAsync(userId, request, productId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseUpdateProductDto>.Ok(res.Value);
         }
         [Authorize(Roles = "Admin")]
         [HttpDelete("{productId}")]
         public async Task<ApiResult> DeleteProduct([FromRoute] int productId)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult.Unauthorized();
+                }
+                var res = await _productService.DeleteAsync(userId, productId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult.Ok();
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch(Exception ex)
             {
-                return ApiResult.Unauthorized();
+                _logger.LogError(ex, "Error occurred while deleting a product");
+                return ApiResult.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _productService.DeleteAsync(userId, productId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult.Ok();
         }
-     /*   [HttpGet("{productId}")]
-        public async Task<ApiResult<ResponseProductDetailsDto>> GetProduct(int productId)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseProductDetailsDto>.BadRequest(errors);
-            }
-            var res = await _productService.GetProductAsync(productId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseProductDetailsDto>.Ok(res.Value);
-        }*/
+        /*   [HttpGet("{productId}")]
+           public async Task<ApiResult<ResponseProductDetailsDto>> GetProduct(int productId)
+           {
+               if (!ModelState.IsValid)
+               {
+                   var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                   return ApiResult<ResponseProductDetailsDto>.BadRequest(errors);
+               }
+               var res = await _productService.GetProductAsync(productId);
+               if (!res.IsSuccess)
+               {
+                   return this.ToApiResult(res);
+               }
+               return ApiResult<ResponseProductDetailsDto>.Ok(res.Value);
+           }*/
         [HttpGet]
         public async Task<ApiResult<List<ResponseGetDiscountProductDto>>> GetAllDiscountProduct()
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
 
+                }
+
+
+                var res = await _productService.GetAllDiscountProductByAllStores();
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
             }
-           
-
-            var res = await _productService.GetAllDiscountProductByAllStores();
-            if (!res.IsSuccess)
+            catch(Exception ex)
             {
-                return this.ToApiResult(res);
+                _logger.LogError(ex, "An error occurred while retrieving discounted products.");
+                return ApiResult<List<ResponseGetDiscountProductDto>>.InternalServerError("حدث خطا داخلي ");
             }
-            return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
         }
         [HttpGet("{query}")]
         public async Task<ApiResult<List<ResponseGetDiscountProductDto>>> GetSearch(string query)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
 
+                }
+
+
+                var res = await _productService.SearchAsync(query);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
             }
-
-
-            var res = await _productService.SearchAsync(query);
-            if (!res.IsSuccess)
+            catch(Exception ex)
             {
-                return this.ToApiResult(res);
+                _logger.LogError(ex, "An error occurred while searching for products.");
+                return ApiResult<List<ResponseGetDiscountProductDto>>.InternalServerError("حدث خطا داخلي ");
             }
-            return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
         }
         [HttpGet]
-        public async Task<ApiResult<List<ResponseGetDiscountProductDto>>> GetFilter(decimal? minPrice,decimal ?maxPrice,enType? type,string? color,enSize? size)
+        public async Task<ApiResult<List<ResponseGetDiscountProductDto>>> GetFilter(decimal? minPrice, decimal? maxPrice, enType? type, string? color, enSize? size)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<List<ResponseGetDiscountProductDto>>.BadRequest(errors);
+
+                }
+                var request = new FilterDto
+                {
+                    Color = color,
+                    Size = size,
+                    Type = type,
+                    maxPrice = maxPrice,
+                    minPrice = minPrice
+                };
+
+                var res = await _productService.FilterAsync(request);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error occured while get filter product");
+                return ApiResult<List<ResponseGetDiscountProductDto>>.InternalServerError("حدث خطا داخلي");
 
             }
-            var request = new FilterDto
-            {
-                Color = color,
-                Size = size,
-                Type = type,
-                maxPrice = maxPrice,
-                minPrice = minPrice
-            };
-
-            var res = await _productService.FilterAsync(request);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<List<ResponseGetDiscountProductDto>>.Ok(res.Value);
         }
-
-
-
-
     }
-
 
 }

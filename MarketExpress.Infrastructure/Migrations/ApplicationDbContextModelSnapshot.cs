@@ -169,71 +169,6 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.ToTable("Complaints", "dbo");
                 });
 
-            modelBuilder.Entity("MarketExpress.Core.Entity.Delivery", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AddressLocation")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DriverId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("EndTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("statue")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DriverId");
-
-                    b.HasIndex("OrderId")
-                        .IsUnique();
-
-                    b.ToTable("Deliveries", "dbo");
-                });
-
-            modelBuilder.Entity("MarketExpress.Core.Entity.DeliveryLocation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DeliveryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Latitude")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Longitude")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DeliveryId");
-
-                    b.ToTable("DeliveryLocations", "dbo");
-                });
-
             modelBuilder.Entity("MarketExpress.Core.Entity.Document", b =>
                 {
                     b.Property<int>("Id")
@@ -257,14 +192,9 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Property<int?>("StoreId")
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("StoreId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Documents", "dbo");
                 });
@@ -346,48 +276,6 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Messages", "dbo");
-                });
-
-            modelBuilder.Entity("MarketExpress.Core.Entity.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedById")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("IsGlobal")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("StoreId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("StoreId");
-
-                    b.ToTable("Notifications", "dbo");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Order", b =>
@@ -603,6 +491,9 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsReacted")
+                        .HasColumnType("bit");
+
                     b.Property<int>("PostId")
                         .HasColumnType("int");
 
@@ -720,6 +611,9 @@ namespace MarketExpress.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
@@ -737,6 +631,9 @@ namespace MarketExpress.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("ProductColorId")
                         .HasColumnType("int");
@@ -778,11 +675,13 @@ namespace MarketExpress.Infrastructure.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Ratings", "dbo");
                 });
@@ -828,16 +727,8 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<decimal>("Latitude")
-                        .HasPrecision(10, 7)
-                        .HasColumnType("decimal(10,7)");
-
                     b.Property<string>("Logo")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasPrecision(10, 7)
-                        .HasColumnType("decimal(10,7)");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
@@ -852,9 +743,6 @@ namespace MarketExpress.Infrastructure.Migrations
 
                     b.Property<DateTime?>("RejectedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("SocialMediaManagerUserId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("StoreName")
                         .IsRequired()
@@ -876,8 +764,6 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
-
-                    b.HasIndex("SocialMediaManagerUserId");
 
                     b.ToTable("Stores", "dbo");
                 });
@@ -973,36 +859,6 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.HasIndex("WalletId");
 
                     b.ToTable("Transactions", "dbo");
-                });
-
-            modelBuilder.Entity("MarketExpress.Core.Entity.UserNotification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("NotificationId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ReadAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NotificationId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserNotifications", "dbo");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Wallet", b =>
@@ -1253,6 +1109,9 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Property<bool>("IsBanned")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1344,49 +1203,13 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Navigation("StoreOwner");
                 });
 
-            modelBuilder.Entity("MarketExpress.Core.Entity.Delivery", b =>
-                {
-                    b.HasOne("MarketExpress.Core.Entity.Identity.User", "Driver")
-                        .WithMany("Deliveries")
-                        .HasForeignKey("DriverId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MarketExpress.Core.Entity.Order", "Order")
-                        .WithOne("Delivery")
-                        .HasForeignKey("MarketExpress.Core.Entity.Delivery", "OrderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Driver");
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("MarketExpress.Core.Entity.DeliveryLocation", b =>
-                {
-                    b.HasOne("MarketExpress.Core.Entity.Delivery", "Delivery")
-                        .WithMany("DeliveryLocations")
-                        .HasForeignKey("DeliveryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Delivery");
-                });
-
             modelBuilder.Entity("MarketExpress.Core.Entity.Document", b =>
                 {
                     b.HasOne("MarketExpress.Core.Entity.Store", "Store")
                         .WithMany("StoreDocuments")
                         .HasForeignKey("StoreId");
 
-                    b.HasOne("MarketExpress.Core.Entity.Identity.User", "User")
-                        .WithMany("UserDocuments")
-                        .HasForeignKey("UserId");
-
                     b.Navigation("Store");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Identity.UserRefreshToken", b =>
@@ -1417,24 +1240,6 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Navigation("Complaint");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("MarketExpress.Core.Entity.Notification", b =>
-                {
-                    b.HasOne("MarketExpress.Core.Entity.Identity.User", "CreatedBy")
-                        .WithMany("AddNotifications")
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MarketExpress.Core.Entity.Store", "Store")
-                        .WithMany("Notifications")
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Order", b =>
@@ -1587,7 +1392,15 @@ namespace MarketExpress.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("MarketExpress.Core.Entity.Identity.User", "User")
+                        .WithMany("Ratings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Product");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Store", b =>
@@ -1598,14 +1411,7 @@ namespace MarketExpress.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MarketExpress.Core.Entity.Identity.User", "SocialMediaManager")
-                        .WithMany("StoreManagerSocialMedias")
-                        .HasForeignKey("SocialMediaManagerUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Owner");
-
-                    b.Navigation("SocialMediaManager");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.StoreCategory", b =>
@@ -1662,25 +1468,6 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Navigation("Payment");
 
                     b.Navigation("Wallet");
-                });
-
-            modelBuilder.Entity("MarketExpress.Core.Entity.UserNotification", b =>
-                {
-                    b.HasOne("MarketExpress.Core.Entity.Notification", "Notification")
-                        .WithMany("UserNotifications")
-                        .HasForeignKey("NotificationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MarketExpress.Core.Entity.Identity.User", "User")
-                        .WithMany("ReceivedNotifications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Notification");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Wallet", b =>
@@ -1769,21 +1556,8 @@ namespace MarketExpress.Infrastructure.Migrations
                     b.Navigation("Messages");
                 });
 
-            modelBuilder.Entity("MarketExpress.Core.Entity.Delivery", b =>
-                {
-                    b.Navigation("DeliveryLocations");
-                });
-
-            modelBuilder.Entity("MarketExpress.Core.Entity.Notification", b =>
-                {
-                    b.Navigation("UserNotifications");
-                });
-
             modelBuilder.Entity("MarketExpress.Core.Entity.Order", b =>
                 {
-                    b.Navigation("Delivery")
-                        .IsRequired();
-
                     b.Navigation("Items");
 
                     b.Navigation("Payment")
@@ -1827,8 +1601,6 @@ namespace MarketExpress.Infrastructure.Migrations
                 {
                     b.Navigation("Employees");
 
-                    b.Navigation("Notifications");
-
                     b.Navigation("Posts");
 
                     b.Navigation("Products");
@@ -1849,8 +1621,6 @@ namespace MarketExpress.Infrastructure.Migrations
 
             modelBuilder.Entity("MarketExpress.Core.Entity.Identity.User", b =>
                 {
-                    b.Navigation("AddNotifications");
-
                     b.Navigation("Cart")
                         .IsRequired();
 
@@ -1860,25 +1630,19 @@ namespace MarketExpress.Infrastructure.Migrations
 
                     b.Navigation("ComplaintsAsStoreOwner");
 
-                    b.Navigation("Deliveries");
-
                     b.Navigation("Messages");
 
                     b.Navigation("OtpCodes");
 
                     b.Navigation("PostReactions");
 
-                    b.Navigation("ReceivedNotifications");
+                    b.Navigation("Ratings");
 
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("StoreFollowers");
 
-                    b.Navigation("StoreManagerSocialMedias");
-
                     b.Navigation("Stores");
-
-                    b.Navigation("UserDocuments");
 
                     b.Navigation("Wallet")
                         .IsRequired();

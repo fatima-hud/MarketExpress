@@ -22,8 +22,8 @@ namespace MarketExpress.Application.Dto.RequestStore.Response
         public string? FeaturedImage { get; set; }
 
      
-        public decimal Latitude { get; set; }
-        public decimal Longitude { get; set; }
+      //  public decimal Latitude { get; set; }
+      //  public decimal Longitude { get; set; }
         public TimeSpan WorkingHoursStart { get; set; }
 
         public TimeSpan WorkingHoursEnd { get; set; }

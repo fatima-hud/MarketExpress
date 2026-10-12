@@ -58,6 +58,14 @@ namespace MarketExpress.Infrastructure.Repositories
             return store;
         }
 
+        public async Task<Store> GetUnActiveStoreByAdminAsync(string ownerId)
+        {
+            var store = await _dbContext.Stores.FirstOrDefaultAsync(e => e.OwnerId == ownerId && e.StoreStatus==enStoreStatus.Approved);
+            return store;
+        }
+
+
+
         public async Task<bool> IsNameExistAsync(string name, int storeId)
         {
             var res = await _dbContext.Stores.FirstOrDefaultAsync(e => e.StoreName.ToLower() == name && e.StoreStatus != enStoreStatus.Rejected && e.StoreStatus != enStoreStatus.Cancelled && e.StoreStatus != enStoreStatus.Deleted && e.Id!=storeId);
@@ -66,19 +74,19 @@ namespace MarketExpress.Infrastructure.Repositories
 
         public async Task<List<Store>> GetAllRequestStoresByUserAsync(string userId)
         {
-            var res = await _dbContext.Stores.Where(e => e.OwnerId == userId).ToListAsync();
+            var res = await _dbContext.Stores.IgnoreQueryFilters().Where(e => e.OwnerId == userId).ToListAsync();
             return res;
         }
 
         public async Task<List<Store>> GetAllRequestStoreByFilter(enStoreStatus storeStatus,int pageNumber,int pageSize)
         {
-            var stors = await _dbContext.Stores.Where(e => e.StoreStatus == storeStatus).OrderByDescending(e=>e.CreatedAt).Skip(pageSize*(pageNumber-1)).Take(pageSize).ToListAsync();
+            var stors = await _dbContext.Stores.IgnoreQueryFilters().Where(e => e.StoreStatus == storeStatus).OrderByDescending(e=>e.CreatedAt).Skip(pageSize*(pageNumber-1)).Take(pageSize).ToListAsync();
             return stors;
         }
 
         public async Task<List<Store>> GetFilterRequestStoresByUserAsync(string userId,enStoreStatus storeStatus)
         {
-            var res = await _dbContext.Stores.Where(e => e.OwnerId == userId && e.StoreStatus==storeStatus).ToListAsync();
+            var res = await _dbContext.Stores.IgnoreQueryFilters().Where(e => e.OwnerId == userId && e.StoreStatus==storeStatus).ToListAsync();
             return res;
         }
 
@@ -104,7 +112,7 @@ namespace MarketExpress.Infrastructure.Repositories
             return res;
         }
 
-        public async Task<List<Store>> GetNearestStoreByUserIdAsync(decimal Latitude,decimal Longitude)
+     /*   public async Task<List<Store>> GetNearestStoreByUserIdAsync(decimal Latitude,decimal Longitude)
         {
 
               var stores = await _dbContext.Stores
@@ -144,6 +152,6 @@ namespace MarketExpress.Infrastructure.Repositories
         private double DegreesToRadians(double degrees)
         {
             return degrees * Math.PI / 180;
-        }
+        }*/
     }
 }

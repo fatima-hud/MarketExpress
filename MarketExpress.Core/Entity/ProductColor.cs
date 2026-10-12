@@ -15,7 +15,8 @@ namespace MarketExpress.Core.Entity
         public string ColorHexCode { get; set; }
        
         public string Image {  get; set; }
-       public ICollection<ProductSize> ProductSizes { get; set; }
+        public bool IsDeleted { get; set; }
+        public ICollection<ProductSize> ProductSizes { get; set; }
         public Product Product { get; set; }
 
 

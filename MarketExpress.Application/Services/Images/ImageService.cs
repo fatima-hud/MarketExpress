@@ -1,6 +1,7 @@
 ﻿using MarketExpress.Core.Results;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace MarketExpress.Application.Services.Images
 {
@@ -45,7 +46,8 @@ namespace MarketExpress.Application.Services.Images
             {
                 await file.CopyToAsync(stream);
             }
-           
+          
+
 
             var imageUrl = $"/uploads/{fileName}";
 

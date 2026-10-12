@@ -24,7 +24,7 @@ namespace MarketExpress.Application.Services.Messages
         public async Task<Result<List<ResponseGetMessageDto>>> GetMessagesByComplaintIdAsync(string userId, int complaintId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user is null)
+            if (user is null||user.IsDeleted)
             {
                 return Result<List<ResponseGetMessageDto>>.NotFound("مستخدم غير موجود");
             }
@@ -68,7 +68,7 @@ namespace MarketExpress.Application.Services.Messages
         public async Task<Result<ResponseRemoveMessageDto>> RemoveMessageAsync(string SenderId, RequestRemoveMessageDto request)
         {
             var user = await _userManager.FindByIdAsync(SenderId);
-            if (user is null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<ResponseRemoveMessageDto>.NotFound("مستخدم غير موجود");
             }
@@ -115,7 +115,7 @@ namespace MarketExpress.Application.Services.Messages
         public async Task<Result<ResponseMessageDto>> SendMessageAsync(string senderId, RequestAddMessageDto request)
         {
             var sender = await _userManager.FindByIdAsync(senderId);
-            if (sender == null)
+            if (sender == null || sender.IsDeleted)
                 return Result<ResponseMessageDto>.NotFound("مستخدم غير موجود");
             if (sender.IsBanned)
             {
@@ -161,7 +161,7 @@ namespace MarketExpress.Application.Services.Messages
         public async Task<Result<ResponseUpdateMessageDto>> UpdateMessageAsync(string SenderId, RequestUpdateMessageDto request)
         {
             var user = await _userManager.FindByIdAsync(SenderId);
-            if (user is null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<ResponseUpdateMessageDto>.NotFound("مستخدم غير موجود");
             }
@@ -221,7 +221,7 @@ namespace MarketExpress.Application.Services.Messages
         public async Task<Result<int>> UpdateReadMessageAsync(string userId, RequestUpdateReadMessageDto request)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user is null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<int>.NotFound("مستخدم غير موجود");
             }

@@ -1,5 +1,6 @@
 ﻿using MarketExpress.Application.Dto.Complaint.Request;
 using MarketExpress.Application.Dto.Complaint.Response;
+using MarketExpress.Core.DtoHelping.Complaint;
 using MarketExpress.Core.Entity;
 using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Core.Enums;
@@ -25,15 +26,20 @@ namespace MarketExpress.Application.Services.Complaints
         public async Task<Result<ResponseAddComplaintDto>> AddAsync(string userId, RequestAddComplaintDto request)
         {
             var customer = await _userManager.FindByIdAsync(userId);
-            if (customer == null)
+            if (customer == null || customer.IsDeleted)
                 return Result<ResponseAddComplaintDto>.NotFound("مستخدم غير موجود");
             if (customer.IsBanned)
             {
                 return Result<ResponseAddComplaintDto>.BadRequest("مستخدم محظور");
             }
+            if(await _userManager.IsInRoleAsync(customer, "Admin"))
+            {
+                return Result<ResponseAddComplaintDto>.BadRequest("لا يمكن لصاحب المتجر ارسال شكوى");
+            }
             var store = await _storeRepository.GetByIdAsync(request.StoreId);
             if (store == null)
                 return Result<ResponseAddComplaintDto>.NotFound("متجر غير موجود");
+           
 
             var complaint = await _complaintRepository.GetComplaintAsync(userId, store.OwnerId);
             if (complaint is null)
@@ -70,40 +76,62 @@ namespace MarketExpress.Application.Services.Complaints
 
         }
 
-        public async Task<Result<List<ResponseGetComplaintDto>>> GetAllAsync(string storeOwnerId)
+        public async Task<Result<List<ResponseGetComplaintByStoreDto>>> GetAllByStoreAsync(string storeOwnerId)
         {
             var owner = await _userManager.FindByIdAsync(storeOwnerId);
-            if (owner == null)
+            if (owner == null || owner.IsDeleted)
             {
-                return Result<List<ResponseGetComplaintDto>>.NotFound("صاحب متجر غير موجود");
+                return Result<List<ResponseGetComplaintByStoreDto>>.NotFound("صاحب متجر غير موجود");
 
+          
             }
             if (owner.IsBanned)
             {
-                return Result<List<ResponseGetComplaintDto>>.BadRequest("مستخدم محظور");
+                return Result<List<ResponseGetComplaintByStoreDto>>.BadRequest("مستخدم محظور");
             }
             var storeOwner = await _storeRepository.GetStoreByAdminAsync(storeOwnerId);
             if (storeOwner == null)
             {
-                return Result<List<ResponseGetComplaintDto>>.NotFound("المستخدم ليس لديه متجر بعد");
+                return Result<List<ResponseGetComplaintByStoreDto>>.NotFound("المستخدم ليس لديه متجر بعد");
             }
-            var complaints = await _complaintRepository.GetAllComplaintByUserIdAsync(storeOwnerId);
-            var response = complaints.Select(c => new ResponseGetComplaintDto
+            var complaints = await _complaintRepository.GetAllComplaintByAdminAsync(storeOwnerId);
+            var response = complaints.Select(c => new ResponseGetComplaintByStoreDto
             {
                 ComplaintId = c.Id,
                 CustomerId = c.CustomerId,
                 Title = c.Title,
-                CustomerFullName = owner.FullName,
-                CustomerImageUrl = owner.ProfilePhoto,
-                StoreName = storeOwner.StoreName,
-                StoreLogoUrl = storeOwner.Logo,
+                CustomerFullName = c.Customer.FullName,
+                CustomerImageUrl = c.Customer.ProfilePhoto,
+              
                 Description = c.Description,
                 CreatedAt = c.CreatedAt,
-             
-              
+                NumberOfUnReadMessage = c.Messages.Count(m => !m.IsRead && m.SenderId == c.CustomerId),
+
+
             }).ToList();
-            return Result<List<ResponseGetComplaintDto>>.Success(response);
+            return Result<List<ResponseGetComplaintByStoreDto>>.Success(response);
 
         }
+
+        public async Task<Result<List<ResponseGetComplaintByUserDto>>> GetAllByUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null || user.IsDeleted)
+            {
+                return Result<List<ResponseGetComplaintByUserDto>>.NotFound("صاحب متجر غير موجود");
+
+
+            }
+            if (user.IsBanned)
+            {
+                return Result<List<ResponseGetComplaintByUserDto>>.BadRequest("مستخدم محظور");
+            }
+       
+            var complaints = await _complaintRepository.GetAllComplaintByUserAsync(userId);
+           
+            return Result<List<ResponseGetComplaintByUserDto>>.Success(complaints);
+        }
+
+      
     }
 }

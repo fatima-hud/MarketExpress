@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Application.Dto.Product.Response;
+using MarketExpress.Application.Dto.Store.Response;
 using MarketExpress.Application.Dto.StoreFollower.Request;
 using MarketExpress.Application.Dto.StoreFollower.Response;
 using MarketExpress.Core.Results;
@@ -14,5 +15,7 @@ namespace MarketExpress.Application.Services.StoreFollowers
     {
         Task<Result<ResponseGetStoreFollowerDto>>UpdateFollowAsync(string userId,RequestFollowStoreDto request);
         Task<Result<List<ResponseGetProductsFollowerDto>>>GetProductsOfFollowerStoresByUserAsync(string userId);
+        Task<Result<int>> GetStoreFollowersCountAsync(int storeId);
+        Task<Result<List<ResponseStoreDto>>> GetStoreFollowByUserAsync(string userId);
     }
 }

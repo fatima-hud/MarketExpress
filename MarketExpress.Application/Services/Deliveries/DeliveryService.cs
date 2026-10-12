@@ -12,7 +12,9 @@ namespace MarketExpress.Application.Services.Deliveries
 {
     public class DeliveryService : IDeliveryService
     {
-        private readonly IDeliveryRepository _deliveryRepository;
+    }
+}
+     /*   private readonly IDeliveryRepository _deliveryRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly UserManager<User> _userManager;
         private readonly IAesEncryptionService _aesEncryptionService;
@@ -127,4 +129,4 @@ namespace MarketExpress.Application.Services.Deliveries
             return Result<ResponseDeliveryDto>.Success(ret);
         }
     }
-}
+}*/

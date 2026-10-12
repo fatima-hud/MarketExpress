@@ -17,7 +17,7 @@ namespace MarketExpress.Application.Services.Stores
         Task<Result<List<ResponseStoreDto>>> GetAllStoresAsync();
         Task<Result<ResponseStoreDto>> UpdateAsync(string userId, RequestUpdateStoreInfoDto request);
         Task<Result<List<ResponseGetProductDto>>> GetAllProductsByStore(int storeId);
-        Task<Result<List<ResponseStoreDto>>> GetNearestStores(string userId,decimal Latitude,decimal Longitude);
+  //      Task<Result<List<ResponseStoreDto>>> GetNearestStores(string userId,decimal Latitude,decimal Longitude);
         Task<Result<ResponseGetStoreImagesDto>>UpdateStoreImagesAsync(string userId, RequestUpdateStoreImagesDto request);
        
 

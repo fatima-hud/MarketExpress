@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace MarketExpress.Infrastructure.Abstacts
 {
-   public interface IDeliveryRepository:IGenericRepositoryAsync<Delivery>
+   public interface IDeliveryRepository//:IGenericRepositoryAsync<Delivery>
     {
-        Task<Delivery> GetDeliveryByOrderIdAsync(int orderId);
+        //Task<Delivery> GetDeliveryByOrderIdAsync(int orderId);
     }
 }

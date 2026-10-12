@@ -1,4 +1,5 @@
-﻿using MarketExpress.Core.Entity.Identity;
+﻿using MarketExpress.Core.DtoHelping;
+using MarketExpress.Core.Entity.Identity;
 using MarketExpress.Infrastructure.InfrastructureBases;
 using System;
 using System.Collections.Generic;
@@ -14,10 +15,14 @@ namespace MarketExpress.Infrastructure.Abstacts
         Task<string> GetFullNameAsync(string userId);
         Task<List<string>> GetRolesByStoreIdAsync(string userId, int storeId);
         Task<List<UserRefreshToken>>GetAllRefreshTokenByUserIdAsync(string userId);  
-        Task<string>GetNationalIdFrontImageByUser(string userId);
-        Task<string> GetNationalIdBackImageByUser(string userId);
+        Task<string>GetNationalIdFrontImageByUser(int storeId);
+        Task<string> GetNationalIdBackImageByUser(int storeId);
         Task<User> GetUserByPhoneNumberAsync(string phoneNumber);
         Task<User> GetUserByEmailAsync(string email);
+        Task<List<ResponseGetActiveUserDto>> GetActiveUsersAsync();
+        Task<List<User>> GetBannedUsersAsync();
+        Task<User?> GetActiveUserByEmailAsync(string email);
+        Task<User?> GetActiveUserByUserNameAsync(string userName);
     } 
     
 }

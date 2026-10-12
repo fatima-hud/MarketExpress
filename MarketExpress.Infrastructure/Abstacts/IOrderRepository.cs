@@ -1,4 +1,5 @@
 ﻿using MarketExpress.Core.Entity;
+using MarketExpress.Core.Enums;
 using MarketExpress.Infrastructure.InfrastructureBases;
 using System;
 using System.Collections.Generic;
@@ -12,5 +13,6 @@ namespace MarketExpress.Infrastructure.Abstacts
         
     {
         Task<List<Order>> GetAllOrderAsync(string userId);
+        Task<List<Order>> GetAllFilterOrdersAsync(enOrderStatus orderStatus, int pageNumber, int pageSize);
     }
 }

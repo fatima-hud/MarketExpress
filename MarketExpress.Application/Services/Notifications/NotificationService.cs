@@ -10,6 +10,7 @@ namespace MarketExpress.Application.Services.Notifications
 {
     public class NotificationService : INotificationService
     {
+    } }/*
         private readonly UserManager<User> _userManager;
         private readonly IStoreRepository _storeRepository;
         private readonly INotificationRepository _notificationRepository;
@@ -29,7 +30,7 @@ namespace MarketExpress.Application.Services.Notifications
             try
             {
                 var owner = await _userManager.FindByIdAsync(ownerStoreId);
-                if (owner is null)
+                if (owner is null || owner.IsDeleted)
                 {
                     return Result<ResponseAddNotificationDto>.NotFound("صاحب متجر غير موجود");
                 }
@@ -139,7 +140,7 @@ namespace MarketExpress.Application.Services.Notifications
         public async Task<Result<List<ResponseGetNotificationDto>>> GetAllNotificationAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user is null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<List<ResponseGetNotificationDto>>.NotFound("مستخدم غير موجود");
             }
@@ -170,7 +171,7 @@ namespace MarketExpress.Application.Services.Notifications
         public async Task<Result<List<ResponseGetNotificationDto>>> GetAllUnReadNotificationAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user is null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<List<ResponseGetNotificationDto>>.NotFound("مستخدم غير موجود");
             }
@@ -200,7 +201,7 @@ namespace MarketExpress.Application.Services.Notifications
         public async Task<Result<ResponseReadNotificationDto>> MarkAsReadAsync(string userId, int notificationId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user is null)
+            if (user is null || user.IsDeleted)
             {
                 return Result<ResponseReadNotificationDto>.NotFound("مستخدم غير موجود");
             }
@@ -235,3 +236,4 @@ namespace MarketExpress.Application.Services.Notifications
         }
     }
 }
+*/

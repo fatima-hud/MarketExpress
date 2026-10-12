@@ -18,6 +18,7 @@ namespace MarketExpress.Application.Services.ProductColors
         Task<Result<ResponseGetProductColorDto>> GetProductColorById(int productColorId);
         Task<Result<List<ResponseGetAllSizeDto>>> GetAllSizeByProductColorAsync(int productId, string color);
 
-        Task<Result<List<ResponseEmptyProductInventoryDto>>> GetAllEmptyProductInventoryAsync(string userId);
+        Task<Result<List<ResponseInventoryAlertDto>>> GetAllProductInventoryAlertAsync(string userId);
+        Task<Result>DeleteProductColor(string userId,int productColorId);
     }
 }

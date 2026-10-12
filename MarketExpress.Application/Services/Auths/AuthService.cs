@@ -50,11 +50,12 @@ namespace MarketExpress.Application.Services.Auths
 
         public async Task<Result<LogInResponse>> LoginInAsync(LoginRequest dto)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
-            if (user is null)
+            var user = await _userRepository.GetActiveUserByEmailAsync(dto.Email);
+            if (user is null )
             {
                 return Result<LogInResponse>.UnAuthorized("الايميل او كلمة المرور غير صحيحة");
             }
+          
             if (user.IsBanned)
             {
                 return Result<LogInResponse>.Failure("المستخدم محظور", failureType: ResultFailureType.Forbidden);
@@ -178,12 +179,13 @@ namespace MarketExpress.Application.Services.Auths
             var trans = await _userRepository.BeginTransactionAsync();
             try
             {
-                var existUserName = await _userManager.FindByNameAsync(user.UserName);
-                if (existUserName != null)
+                var existUserName = await _userRepository.GetActiveUserByUserNameAsync(request.UserName);
+                
+                if (existUserName != null )
                 {
                     return Result.BadRequest("اسم الستخدم موجود مسبقا");
                 }
-                var existUser = await _userManager.FindByEmailAsync(user.Email);
+                var existUser = await _userRepository.GetActiveUserByEmailAsync(request.Email);
                 if (existUser != null)
                 {
                     return Result.BadRequest("البريد الإلكتروني موجود مسبقا");
@@ -241,8 +243,8 @@ namespace MarketExpress.Application.Services.Auths
         }
         public async Task<Result<AuthModel>> GetTokenAsync(LoginRequest loginRequest)
         {
-            var user = await _userManager.FindByEmailAsync(loginRequest.Email);
-            if (user is null)
+            var user = await _userRepository.GetActiveUserByEmailAsync(loginRequest.Email);
+            if (user is null )
             {
                 return Result<AuthModel>.NotFound(" البريد الالكتروني او كلمة المرور غير صحيحة");
             }
@@ -391,7 +393,7 @@ namespace MarketExpress.Application.Services.Auths
         }
         public async Task<Result> ForgotPasswordAsync(ForgotPasswordRequest request)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            var user = await _userRepository.GetActiveUserByEmailAsync(request.Email);
             if (user == null)
                 return Result.NotFound("المستخدم غير موجود");
             //Generate Random Number
@@ -411,7 +413,7 @@ namespace MarketExpress.Application.Services.Auths
             using var trans = await _userRepository.BeginTransactionAsync();
             try
             {
-                var user = await _userManager.FindByEmailAsync(request.Email);
+                var user = await _userRepository.GetActiveUserByEmailAsync(request.Email);
                 if (user == null)
                     return Result.NotFound("المستخدم غير موجود");
                 if (user.ResetPasswordCode != request.Code ||

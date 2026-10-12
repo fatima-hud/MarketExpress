@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MarketExpress.Application.Dto.Complaint.Response
 {
-   public class ResponseGetComplaintDto
+   public class ResponseGetComplaintByStoreDto
     {
         public int ComplaintId { get; set; }
         public string CustomerId { get; set; }
@@ -15,12 +15,13 @@ namespace MarketExpress.Application.Dto.Complaint.Response
         public string CustomerImageUrl { get; set; }
 
 
-        public string StoreName { get; set; }
-        public string? StoreLogoUrl { get; set; }
+    
         public string Title { get; set; }
         public string Description { get; set; }
         public DateTime CreatedAt { get; set; }
-        public enComplaintStatus Status { get; set; }
+        public int NumberOfUnReadMessage { get; set; }
+
+
     }
 }
 

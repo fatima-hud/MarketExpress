@@ -15,32 +15,42 @@ namespace MarketExpress.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
-
-        public PaymentController(IPaymentService paymentService)
+        private readonly ILogger<PaymentController> _logger;
+        public PaymentController(IPaymentService paymentService, ILogger<PaymentController> logger)
         {
             _paymentService = paymentService;
+            _logger = logger;
         }
         [HttpGet]
         [Authorize]
         public async Task<ApiResult<ResponseGetPaymentDto>> GetPayment(int orderId)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetPaymentDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseGetPaymentDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetPaymentDto>.Unauthorized();
+                }
+                var res = await _paymentService.GetAsync(userId, orderId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetPaymentDto>.Ok(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch (Exception ex)
             {
-                return ApiResult<ResponseGetPaymentDto>.Unauthorized();
+                _logger.LogError(ex, "An error occurred while retrieving payment information.");
+                return ApiResult<ResponseGetPaymentDto>.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _paymentService.GetAsync(userId, orderId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseGetPaymentDto>.Ok(res.Value);
         }
-    }
+
+    } 
 }

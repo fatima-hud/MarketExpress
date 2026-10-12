@@ -21,8 +21,8 @@ namespace MarketExpress.Core.Entity
         public string? FeaturedImage { get; set; }
       
         public bool IsActive {  get; set; }
-        public decimal Latitude {  get; set; }
-        public decimal Longitude { get; set; }
+      //  public decimal Latitude {  get; set; }
+     //   public decimal Longitude { get; set; }
         public string PhoneNumber {  get; set; }
         public string Email {  get; set; }
         public TimeSpan WorkingHoursStart { get; set; }
@@ -40,16 +40,14 @@ namespace MarketExpress.Core.Entity
         public User Owner{ get;set; }
         public ICollection<User> Employees { get; set; }
    
-        public ICollection<Product>Products { get; set; }
+        public ICollection<Product>Products { get; set; }=new List<Product>();
       
-        public ICollection<Notification> Notifications { get; set; }
-        public ICollection<Document> StoreDocuments { get; set; }
-        public ICollection<StoreCategory> StoreCategories {  get; set; }
-        public ICollection<StoreFollower> StoreFollowers { get; set; }
-        public ICollection<Post> Posts { get; set; }
-        public string? SocialMediaManagerUserId { get; set; }
-        public User? SocialMediaManager { get; set; }
-
+      //  public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public ICollection<Document> StoreDocuments { get; set; } = new List<Document>();
+        public ICollection<StoreCategory> StoreCategories { get; set; } = new List<StoreCategory>();
+        public ICollection<StoreFollower> StoreFollowers { get; set; } = new List<StoreFollower>();
+        public ICollection<Post> Posts { get; set; } = new List<Post>();
+      
 
 
 

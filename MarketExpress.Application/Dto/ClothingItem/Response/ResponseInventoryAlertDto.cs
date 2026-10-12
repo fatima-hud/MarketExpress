@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MarketExpress.Application.Dto.ClothingItem.Response
 {
-    public class ResponseEmptyProductInventoryDto
+    public class ResponseInventoryAlertDto
     {
         public int Id { get; set; }
         public int ProductId { get; set; }

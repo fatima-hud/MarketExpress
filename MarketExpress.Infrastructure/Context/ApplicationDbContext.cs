@@ -81,10 +81,9 @@ namespace MarketExpress.Database
 
         public DbSet<Complaint> Complaints { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
-        public DbSet<UserNotification> UserNotifications { get; set; }
-        public DbSet<Delivery> Deliveries { get; set; }
-        public DbSet<DeliveryLocation> DeliveryLocations { get; set; }
+     //   public DbSet<Notification> Notifications { get; set; }
+     //   public DbSet<UserNotification> UserNotifications { get; set; }
+        
         public DbSet<StoreCategory> StoreCategories { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Wallet> Wallets { get; set; }

@@ -32,6 +32,8 @@ namespace MarketExpress.Application.Dto.Product.Request
         
         [Required]
         public int CategoryId {  get; set; }
+        [Required]
+        public enOccasion Occasion { get; set; }
         public decimal ?DiscountPrecentage {  get; set; }
         public DateTime? DiscountStartDate { get; set; }
         public DateTime? DiscountEndDate { get; set; }

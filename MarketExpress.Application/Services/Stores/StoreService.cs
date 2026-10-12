@@ -50,7 +50,7 @@ namespace MarketExpress.Application.Services.Stores
                     return Result.BadRequest("متجر محذوف مسبقا");
                 }
                 var currentUser = await _userManager.FindByIdAsync(adminId);
-                if (currentUser is null)
+                if (currentUser is null|| currentUser.IsDeleted)
                 {
                     await trans.RollbackAsync();
                     return Result.NotFound("مالك المتجر غير موجود");
@@ -96,7 +96,7 @@ namespace MarketExpress.Application.Services.Stores
         public async Task<Result<ResponseOwnerStoreDto>> GetStoreByAdminAsync(string ownerId)
         {
             var user = await _userManager.FindByIdAsync(ownerId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
                 return Result<ResponseOwnerStoreDto>.NotFound("مستخدم غير موجود");
             }
@@ -118,8 +118,8 @@ namespace MarketExpress.Application.Services.Stores
                 Address = store.Address,
                 Description = store.Description,
                 IsActive = store.IsActive,
-                Latitude = store.Latitude,
-                Longitude = store.Longitude,
+              //  Latitude = store.Latitude,
+               // Longitude = store.Longitude,
                 Logo = store.Logo,
                 FeaturedImage = store.FeaturedImage,
                 WorkingHoursEnd = store.WorkingHoursEnd,
@@ -155,8 +155,8 @@ namespace MarketExpress.Application.Services.Stores
                 FeaturedImage = e.FeaturedImage,
                 WorkingHoursStart = e.WorkingHoursStart,
                 WorkingHoursEnd = e.WorkingHoursEnd,
-                Latitude = e.Latitude,
-                Longitude = e.Longitude,
+            //    Latitude = e.Latitude,
+            //    Longitude = e.Longitude,
                 IsActive = e.IsActive
             }).ToList();
             return Result<List<ResponseStoreDto>>.Success(ret);
@@ -168,7 +168,7 @@ namespace MarketExpress.Application.Services.Stores
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
+                if (user == null || user.IsDeleted)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseStoreDto>.NotFound(" مستخدم غير موجود");
@@ -218,7 +218,7 @@ namespace MarketExpress.Application.Services.Stores
                 {
                     store.Address = request.Address;
                 }
-                if (request.Latitude.HasValue)
+             /*   if (request.Latitude.HasValue)
                 {
                     if (request.Latitude < -90 || request.Latitude > 90)
                     {
@@ -235,7 +235,7 @@ namespace MarketExpress.Application.Services.Stores
                         return Result<ResponseStoreDto>.BadRequest("خطوط الطول غير صحيحة");
                     }
                     store.Longitude = request.Longitude.Value;
-                }
+                }*/
                 var start = request.WorkingHoursStart ?? store.WorkingHoursStart;
                 var end = request.WorkingHoursEnd ?? store.WorkingHoursEnd;
                 var invalidRange = start < TimeSpan.Zero || end < TimeSpan.Zero || start >= TimeSpan.FromHours(24) || end >= TimeSpan.FromHours(24);
@@ -288,8 +288,8 @@ namespace MarketExpress.Application.Services.Stores
                     FeaturedImage = store.FeaturedImage,
                     WorkingHoursStart = store.WorkingHoursStart,
                     WorkingHoursEnd = store.WorkingHoursEnd,
-                    Latitude = store.Latitude,
-                    Longitude = store.Longitude,
+                   // Latitude = store.Latitude,
+                   // Longitude = store.Longitude,
                     IsActive = store.IsActive
 
                 };
@@ -345,7 +345,7 @@ namespace MarketExpress.Application.Services.Stores
 
         }
 
-        public async Task<Result<List<ResponseStoreDto>>> GetNearestStores(string userId, decimal Latitude, decimal Longitude)
+       /* public async Task<Result<List<ResponseStoreDto>>> GetNearestStores(string userId, decimal Latitude, decimal Longitude)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -381,7 +381,7 @@ namespace MarketExpress.Application.Services.Stores
             return Result<List<ResponseStoreDto>>.Success(ret);
 
 
-        }
+        }*/
 
         public async Task<Result<ResponseGetStoreImagesDto>> UpdateStoreImagesAsync(string userId, RequestUpdateStoreImagesDto request)
         {
@@ -389,7 +389,7 @@ namespace MarketExpress.Application.Services.Stores
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
+                if (user == null || user.IsDeleted)
                 {
 
                     return Result<ResponseGetStoreImagesDto>.NotFound("مستخدم غير موجود");

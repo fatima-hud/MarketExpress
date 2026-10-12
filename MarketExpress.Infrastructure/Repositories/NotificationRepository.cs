@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace MarketExpress.Infrastructure.Repositories
 {
-    public class NotificationRepository : GenericRepositoryAsync<Notification>, INotificationRepository
+    public class NotificationRepository : GenericRepositoryAsync<Notification>
     {
         public NotificationRepository(ApplicationDbContext dbContext) : base(dbContext)
         {
         }
 
-        public async Task<bool> DuplicateCheckAsync(string createdById, string title, string message,enNotificationType type)
+      /*  public async Task<bool> DuplicateCheckAsync(string createdById, string title, string message,enNotificationType type)
         {
             var fromTime = DateTime.UtcNow.AddSeconds(-10);
             var duplicate = await _dbContext.Notifications.AnyAsync(n =>
@@ -29,6 +29,6 @@ namespace MarketExpress.Infrastructure.Repositories
                 n.CreatedAt >= fromTime
             );
             return duplicate;
-        }
+        }*/
     }
 }

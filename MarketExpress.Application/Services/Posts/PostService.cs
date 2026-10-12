@@ -1,6 +1,7 @@
 ﻿using MarketExpress.Application.Dto.Post.Request;
 using MarketExpress.Application.Dto.Post.Response;
 using MarketExpress.Application.Dto.PostMedia.Response;
+using MarketExpress.Application.Dto.PostReaction.Response;
 using MarketExpress.Application.Dto.Response;
 using MarketExpress.Application.Services.Images;
 using MarketExpress.Application.Services.Videos;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,8 +30,9 @@ namespace MarketExpress.Application.Services.Posts
         private readonly IPostMediaRepository _postMediaRepository;
         private readonly IPostRepository _postRepository;
         private readonly IVideoService _videoService;
+        private readonly IPostReactionRepository _postReactionRepository;
 
-        public PostService(UserManager<User> userManager, IStoreRepository storeRepository, RoleManager<IdentityRole> roleManager, IRoleRepository roleRepository,IImageService imageService,IPostRepository postRepository,IPostMediaRepository postMediaRepository,IVideoService videoService)
+        public PostService(UserManager<User> userManager, IStoreRepository storeRepository, RoleManager<IdentityRole> roleManager, IRoleRepository roleRepository,IImageService imageService,IPostRepository postRepository,IPostMediaRepository postMediaRepository,IVideoService videoService,IPostReactionRepository postReactionRepository)
         {
             _userManager = userManager;
             _storeRepository = storeRepository;
@@ -39,6 +42,7 @@ namespace MarketExpress.Application.Services.Posts
             _postMediaRepository = postMediaRepository;
             _postRepository = postRepository;
             _videoService = videoService;
+            _postReactionRepository = postReactionRepository;
         }
 
         public async Task<Result<ResponseGetPostDto>> AddAsync(string userId, RequestAddPostDto request)
@@ -47,34 +51,24 @@ namespace MarketExpress.Application.Services.Posts
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
+                if (user is null || user.IsDeleted)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseGetPostDto>.NotFound("المستخدم غير موجود");
                 }
-                var isUserSocialMediaManager = await _userManager.IsInRoleAsync(user, "SocialMediaManager");
-                if (!isUserSocialMediaManager)
-                {
-                    await trans.RollbackAsync();
-                    return Result<ResponseGetPostDto>.BadRequest("المستخدم ليس لديه صلاحية اضافة منشور");
-                }
-                var store = await _storeRepository.GetByIdAsync(request.StoreId);
+               
+                var store = await _storeRepository.GetStoreByAdminAsync(userId);
                 if (store == null)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseGetPostDto>.NotFound("المتجر غير موجود");
                 }
-                if (store.SocialMediaManagerUserId != userId)
-                {
-                    await trans.RollbackAsync();
-                    return Result<ResponseGetPostDto>.BadRequest("المستخدم ليس لديه صلاحية اضافة منشور");
-                }
-
+               
                 var post = new Post
                 {
                     Content = request.Content,
                     CreatedAt = DateTime.UtcNow,
-                    StoreId = request.StoreId,
+                    StoreId = store.Id,
                     Visibility = request.Visibility
 
                 };
@@ -148,31 +142,25 @@ namespace MarketExpress.Application.Services.Posts
         public async Task<Result> DeleteAsync(string userId, int postId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            if (user == null || user.IsDeleted)
             {
-               
                 return Result.NotFound("المستخدم غير موجود");
             }
-            var isUserSocialMediaManager = await _userManager.IsInRoleAsync(user, "SocialMediaManager");
-            if (!isUserSocialMediaManager)
+            var store = await _storeRepository.GetStoreByAdminAsync(userId);
+            if (store == null)
             {
               
-                return Result.BadRequest("المستخدم ليس لديه صلاحية اضافة منشور");
+                return Result.NotFound("المتجر غير موجود");
             }
             var post = await _postRepository.GetByIdAsync(postId);
             if (post == null)
             {
                 return Result.NotFound("المنشور غير موجود");
             }
-            var store = await _storeRepository.GetByIdAsync(post.StoreId);
-            if (store == null)
+         
+            if (store.Id!= post.StoreId)
             {
-              
-                return Result.NotFound("المتجر غير موجود");
-            }
-            if (store.SocialMediaManagerUserId != userId)
-            {
-               
+
                 return Result.BadRequest("المستخدم ليس لديه صلاحية اضافة منشور");
             }
            
@@ -184,19 +172,21 @@ namespace MarketExpress.Application.Services.Posts
 
         }
 
-        public async Task<Result<List<ResponseGetPostDto>>> GetAllAsync(int storeId)
+        public async Task<Result<List<ResponseGetPostDto>>> GetAllAsync(string?userId,int storeId)
         {
             var store=await _storeRepository.GetByIdAsync(storeId);
             if (store == null)
             {
                 return Result<List<ResponseGetPostDto>>.NotFound("المتجر غير موجود");
             }
-           var posts=await _postRepository.GetAllPostsByStoreAsync(storeId);
+           var posts=await _postRepository.GetAllPostsByStoreAsync(userId,storeId);
            var ret = new List<ResponseGetPostDto>();
             if (!posts.Any())
             {
                 return Result<List<ResponseGetPostDto>>.Success(ret);
             }
+          
+             
             ret = posts.Select(e => new ResponseGetPostDto
             {
                 Id = e.Id,
@@ -206,6 +196,15 @@ namespace MarketExpress.Application.Services.Posts
                 StoreId = storeId,
                 UpdatedAt = e.UpdatedAt,
                 Visibility = e.Visibility,
+                MyReaction = userId!=null?e.PostReactions?.FirstOrDefault(p => p.UserId == userId && p.IsReacted)?.ReactionType:null,
+                PostReactions = e.PostReactions?.Where(p=>p.IsReacted).GroupBy(r => r.ReactionType)
+    .Select(g => new ResponseGetReactionSummaryDto
+    {
+        ReactionType = g.Key,
+        Count = g.Count()
+    
+    
+            }).ToList() ?? new List<ResponseGetReactionSummaryDto>(),
                 PostMedias = e.PostMedias?
     .Select(p => new ResponseGetPostMediaDto
     {
@@ -228,31 +227,27 @@ namespace MarketExpress.Application.Services.Posts
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
+                if (user == null || user.IsDeleted)
                 {
                     await trans.RollbackAsync();
 
                     return Result<ResponseGetPostDto>.NotFound("المستخدم غير موجود");
                 }
-                var isUserSocialMediaManager = await _userManager.IsInRoleAsync(user, "SocialMediaManager");
-                if (!isUserSocialMediaManager)
+                var store = await _storeRepository.GetStoreByAdminAsync(userId);
+                if (store == null)
                 {
                     await trans.RollbackAsync();
-                    return Result<ResponseGetPostDto>.BadRequest("المستخدم ليس لديه صلاحية اضافة منشور");
+                    return Result<ResponseGetPostDto>.NotFound("المتجر غير موجود");
                 }
+
                 var post = await _postRepository.GetByIdAsync(postId);
                 if (post == null)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseGetPostDto>.NotFound("المنشور غير موجود");
                 }
-                var store = await _storeRepository.GetByIdAsync(post.StoreId);
-                if (store == null)
-                {
-                    await trans.RollbackAsync();
-                    return Result<ResponseGetPostDto>.NotFound("المتجر غير موجود");
-                }
-                if (store.SocialMediaManagerUserId != userId)
+              
+                if (store.Id != post.StoreId)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseGetPostDto>.BadRequest("المستخدم ليس لديه صلاحية تعديل منشور");
@@ -264,7 +259,6 @@ namespace MarketExpress.Application.Services.Posts
 
                     foreach (var item in request.DeletedMediaIds)
                     {
-                        Console.WriteLine($"MediaId = {item}");
                         var media = await _postMediaRepository.GetByIdAsync(item);
                         if (media == null)
                         {
@@ -298,6 +292,7 @@ namespace MarketExpress.Application.Services.Posts
                         if (media.MediaType == enMediaType.Image)
                         {
                             uploadResult = await _imageService.UploadImageAsync(media.File);
+                            Console.WriteLine($"URL = {uploadResult.Value}");
                         }
                         else
                         {

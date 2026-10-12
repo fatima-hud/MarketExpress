@@ -19,11 +19,13 @@ namespace MarketExpress.Controllers
     {
         private readonly ICartService _cartService;
         private readonly ICartItemService _cartItemService;
+        private readonly ILogger<CartController> _logger;
 
-        public CartController(ICartService cartService, ICartItemService cartItemService)
+        public CartController(ICartService cartService, ICartItemService cartItemService, ILogger<CartController> logger)
         {
             _cartService = cartService;
             _cartItemService = cartItemService;
+            _logger = logger;
         }
 
 
@@ -31,92 +33,124 @@ namespace MarketExpress.Controllers
         [HttpPost]
         public async Task<ApiResult<ResponseCartItemDto>> AddToCart([FromBody] RequestCartItemDto dto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseCartItemDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseCartItemDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseCartItemDto>.Unauthorized();
+                }
+                var res = await _cartItemService.AddAsync(userId, dto);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseCartItemDto>.Created(res.Value, "success");
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
+            catch(Exception ex)
             {
-                return ApiResult<ResponseCartItemDto>.Unauthorized();
+                _logger.LogError(ex, "An error occurred while adding item to cart.");
+                return ApiResult<ResponseCartItemDto>.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _cartItemService.AddAsync(userId, dto);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseCartItemDto>.Created(res.Value, "sucess");
         }
 
         [Authorize]
         [HttpPut]
         public async Task<ApiResult<ResponseUpdateQuantityItemInCartDto>> UpdateCartItem(int cartItemId,  UpdateCartItemDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseUpdateQuantityItemInCartDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseUpdateQuantityItemInCartDto>.BadRequest(errors);
 
-            }
+                }
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
-            {
-                return ApiResult<ResponseUpdateQuantityItemInCartDto>.Unauthorized();
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseUpdateQuantityItemInCartDto>.Unauthorized();
+                }
+                var res = await _cartItemService.UpdateAsync(userId, cartItemId, request);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseUpdateQuantityItemInCartDto>.Ok(res.Value);
             }
-            var res = await _cartItemService.UpdateAsync(userId,cartItemId,request);
-            if (!res.IsSuccess)
+            catch(Exception ex)
             {
-                return this.ToApiResult(res);
+                _logger.LogError(ex, "An error occurred while updating item in cart.");
+                return ApiResult<ResponseUpdateQuantityItemInCartDto>.InternalServerError("حدث خطا داخلي ");
             }
-            return ApiResult<ResponseUpdateQuantityItemInCartDto>.Ok(res.Value);
         }
         [Authorize]
         [HttpDelete]
         public async Task<ApiResult> DeleteCartItem( RequestDeleteItemsFromCartDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult.Unauthorized();
+                }
+                var res = await _cartItemService.DeleteAsync(userId, request);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult.Ok("Deleted sucessfuly");
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId) )
+            catch(Exception ex)
             {
-                return ApiResult.Unauthorized();
+                _logger.LogError(ex, "An error occurred while deleting item from cart.");
+                return ApiResult.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _cartItemService.DeleteAsync(userId,request);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult.Ok("Deleted sucessfuly");
         }
 
         [Authorize]
         [HttpGet]
         public async Task<ApiResult<ResponseGetInfoCartDto>> GetCartItems()
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ApiResult<ResponseGetInfoCartDto>.BadRequest(errors);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ApiResult<ResponseGetInfoCartDto>.BadRequest(errors);
 
+                }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ApiResult<ResponseGetInfoCartDto>.Unauthorized();
+                }
+                var res = await _cartItemService.GetItemsFromCartIdAsync(userId);
+                if (!res.IsSuccess)
+                {
+                    return this.ToApiResult(res);
+                }
+                return ApiResult<ResponseGetInfoCartDto>.Ok(res.Value);
             }
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            catch (Exception ex)
             {
-                return ApiResult<ResponseGetInfoCartDto>.Unauthorized();
+                _logger.LogError(ex, "An error occurred while retrieving cart items.");
+                return ApiResult<ResponseGetInfoCartDto>.InternalServerError("حدث خطا داخلي ");
             }
-            var res = await _cartItemService.GetItemsFromCartIdAsync(userId);
-            if (!res.IsSuccess)
-            {
-                return this.ToApiResult(res);
-            }
-            return ApiResult<ResponseGetInfoCartDto>.Ok(res.Value);
         }
 
     }

@@ -10,7 +10,7 @@ namespace MarketExpress.Core.Entity
 {
     public class Notification
     {
-        public int Id {  get; set; }
+      /*  public int Id {  get; set; }
         public string Title {  get; set; }
         
         public string Message {  get; set; }
@@ -18,10 +18,11 @@ namespace MarketExpress.Core.Entity
         public DateTime CreatedAt {  get; set; }
         public string CreatedById { get; set; }
         public bool IsGlobal { get; set; }
-        public int? StoreId {  get; set; }
-        public Store Store { get; set; }
-        public ICollection<UserNotification> UserNotifications {  get; set; }
-        public User CreatedBy { get; set; }
+      //  public int? StoreId {  get; set; }
+       // public Store Store { get; set; }
+       // public ICollection<UserNotification> UserNotifications {  get; set; }
+     //   public User CreatedBy { get; set; }
+      */
        
 
     }

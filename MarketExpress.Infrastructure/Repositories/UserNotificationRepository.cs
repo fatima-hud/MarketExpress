@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace MarketExpress.Infrastructure.Repositories
 {
-    public class UserNotificationRepository : GenericRepositoryAsync<UserNotification>, IUserNotificationRepository
+    public class UserNotificationRepository //: GenericRepositoryAsync<UserNotification>, IUserNotificationRepository
     {
-        public UserNotificationRepository(ApplicationDbContext dbContext) : base(dbContext)
+     /*   public UserNotificationRepository(ApplicationDbContext dbContext) : base(dbContext)
         {
         }
 
@@ -33,6 +33,6 @@ namespace MarketExpress.Infrastructure.Repositories
         {
             var ret=await _dbContext.UserNotifications.FirstOrDefaultAsync(e=>e.UserId==userId && e.NotificationId == notificationId);
             return ret;
-        }
+        }*/
     }
 }

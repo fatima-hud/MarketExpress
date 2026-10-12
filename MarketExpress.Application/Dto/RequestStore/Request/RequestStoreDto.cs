@@ -27,10 +27,10 @@ namespace MarketExpress.Application.Dto.RequestStore.Request
         [Required]
         public IFormFile Logo { get; set; }
 
-        [Required]
-        public decimal Latitude { get; set; }
-        [Required]
-        public decimal Longitude { get; set; }
+      
+     //   public decimal Latitude { get; set; }
+       
+      //  public decimal Longitude { get; set; }
         [Required]
         public TimeSpan WorkingHoursStart { get; set; }
         [Required]

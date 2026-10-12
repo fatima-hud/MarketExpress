@@ -19,7 +19,7 @@ namespace MarketExpress.Core.Entity
         public Payment Payment { get; set; }
         public ICollection<OrderItem> Items { get; set; }
         public User User { get; set; }
-        public Delivery Delivery { get; set; }
+     //   public Delivery Delivery { get; set; }
 
         
 

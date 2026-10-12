@@ -10,8 +10,7 @@ namespace MarketExpress.Application.Dto.Response
     public class ResponseCartItemDto
     {
 
-        public string UserId {  get; set; }
-
+      
         public int CartId { get; set; }
         public int StoreId {  get; set; }
         public int ProductId { get; set; }

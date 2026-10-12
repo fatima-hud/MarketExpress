@@ -22,10 +22,11 @@ namespace MarketExpress.Infrastructure.Abstacts
         Task<List<ProductColor>> GetAllClothingItemByProductAsync(int productId);
         Task<List<ResponseGetAllSizeDto>> GetAllSizeByProductColor(int productColorId);
        
-        Task<List<ProductSize>> GetEmptyProductInventoryAsync(int storeId);
+        Task<List<ProductSize>> GetProductInventoryAlertAsync(int storeId);
         Task<string>GetClothingItemImageAsync(int productId,string color);
         Task<ProductColor> GetProductColorIdAsync(int productId, string color);
         Task<int> GetProductByProductColorAsync(int productColorId);
         Task<bool>IsProductHasColorAsync(int productId,string color);
+        Task<ProductColor> GetProductColorWithProductAsync(int productColorId);
     }
 }

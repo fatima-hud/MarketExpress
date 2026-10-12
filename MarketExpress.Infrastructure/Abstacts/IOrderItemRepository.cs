@@ -13,6 +13,6 @@ namespace MarketExpress.Infrastructure.Abstacts
     {
         Task<List<OrderItem>> GetOrderItemsAsync(int orderId);
         Task<List<IGrouping<int, OrderItem>>> GroupingItemsForStoresAsync(int orderId);
-        Task<List<ResponseProductInventoryDto>> GetProductInventoryAsync(int storeId, DateTime startDate, DateTime endDate);
+        Task<List<ResponseGetOrderDetailesDto>> GetProductInventoryAsync(int storeId, DateTime startDate, DateTime endDate);
     }
 }

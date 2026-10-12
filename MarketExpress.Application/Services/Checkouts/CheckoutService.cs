@@ -49,7 +49,7 @@ namespace MarketExpress.Application.Services.Checkouts
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
+                if (user == null || user.IsDeleted)
                 {
                     await trans.RollbackAsync();
                     return Result<ResponseCancelOrderDto>.NotFound("المستخدم غير موجود");
@@ -212,7 +212,7 @@ namespace MarketExpress.Application.Services.Checkouts
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
+                if (user == null || user.IsDeleted)
                 {
                     await trans.RollbackAsync();
                     return Result<CheckoutDto>.NotFound("المستخدم غير موجود");
@@ -245,7 +245,7 @@ namespace MarketExpress.Application.Services.Checkouts
                     if (stockItem == null || stockItem.Quantity < item.Quantity)
                     {
                         await trans.RollbackAsync();
-                        return Result<CheckoutDto>.BadRequest($"الكمية المطلوبةاعلى من المخزون  {item.ProductId} "
+                        return Result<CheckoutDto>.BadRequest($"الكمية المطلوبةاعلى من المخزون  "
 
                         );
                     }
@@ -275,6 +275,11 @@ namespace MarketExpress.Application.Services.Checkouts
                     {
                         await trans.RollbackAsync();
                         return Result<CheckoutDto>.NotFound("محفظة المتجر غير موجودة");
+                    }
+                    if (storeWallet.Id == wallet.Id)
+                    {
+                        await trans.RollbackAsync();
+                        return Result<CheckoutDto>.NotFound("لا يمكن سحب وايداع رصيد من نفس المحفظة");
                     }
 
                     storeWallet.Balance += total;
